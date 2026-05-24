@@ -1,0 +1,213 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "client"
+  // default output, biarkan Prisma taruh di node_modules/@prisma/client
+  // output   = "./generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+enum roles {
+  user
+  merchant
+  super_admin
+}
+
+// State Machine: Siklus hidup status pesanan
+enum order_status {
+  pending       // Menunggu konfirmasi pembayaran
+  processing    // Pembayaran berhasil, sedang diproses toko
+  on_shipping   // Barang sedang dalam pengiriman
+  delivered     // Barang sudah diterima pembeli
+  completed     // Transaksi selesai & ulasan diberikan
+  cancelled     // Pesanan dibatalkan
+}
+
+model users {
+  id                 String               @id @unique @default(uuid())
+  email              String               @unique
+  password           String
+  total_point        Int                  @default(0)
+  role               roles                @default(user)
+  created_at         DateTime             @default(now())
+  updated_at         DateTime             @updatedAt
+  nik                String?
+  identity_card      String?
+  is_displayed       Boolean              @default(true)
+  // Relations
+  merchants          merchants[]
+  points             points[]
+  stocks             stocks[]
+  followers          followers[]
+  ratings            merchant_rating[]
+  merchant_followers merchant_followers[]
+  addresses          user_addresses[]
+}
+
+model points {
+  id         String   @id @default(uuid())
+  user_id    String
+  amount     Int
+  expires_in DateTime
+  status     String   @default("active") // active | used | expired
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  // Relations
+  user       users    @relation(fields: [user_id], references: [id])
+}
+
+model merchants {
+  id              String   @id @default(uuid())
+  user_id         String
+  name            String
+  type            String
+  location        String
+  description     String
+  profile_photo   String // single profile photo URL
+  banner_img      String // banner image URL
+  gallery_photo   String // legacy single gallery photo (will be deprecated)
+  profilePhotoUrl String? // new field for clearer naming (optional)
+  bannerImageUrl  String? // new optional banner naming
+  galleryImages   Json? // array of gallery image URLs stored as JSON
+  restricted      Boolean? @default(false)
+  verified        Boolean? @default(false)
+  total_follower  Int?     @default(0)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  latitude        Float?
+  longitude       Float?
+  google_map_url  String?
+  iframe_map_url  String?
+
+  // Relations
+  user              users                @relation(fields: [user_id], references: [id])
+  stocks            stocks[]
+  ratings           merchant_rating[]
+  followers         followers[]
+  selledStocks      selled_stocks[]
+  merchantFollowers merchant_followers[]
+}
+
+model followers {
+  id          String   @id @default(uuid())
+  user_id     String
+  merchant_id String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  // Relations
+  user     users     @relation(fields: [user_id], references: [id])
+  merchant merchants @relation(fields: [merchant_id], references: [id])
+
+  @@unique([user_id, merchant_id]) // opsional: cegah follow duplikat
+}
+
+model stock_rating {
+  id         String   @id @default(uuid())
+  stock_id   String
+  rate       Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  stock stocks @relation(fields: [stock_id], references: [id])
+}
+
+model merchant_rating {
+  id          String @id @default(uuid())
+  user_id     String
+  rate        Int
+  comment     String
+  merchant_id String
+
+  photo_url  String? // [null] => opsional
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  user     users     @relation(fields: [user_id], references: [id])
+  merchant merchants @relation(fields: [merchant_id], references: [id])
+}
+
+model stocks {
+  id           String  @id @default(uuid())
+  user_id      String
+  merchant_id  String
+  name         String
+  description  String?
+  quantity     Int
+  photo_url    String
+  price        Int
+  is_displayed Boolean @default(true)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  user        users          @relation(fields: [user_id], references: [id])
+  merchant    merchants      @relation(fields: [merchant_id], references: [id], onDelete: Cascade)
+  stockRating stock_rating[]
+}
+
+model selled_stocks {
+  id          String       @id @default(uuid())
+  stock_id    String
+  quantity    Int
+  total_price Float
+  merchant_id String
+  user_id     String
+  payment_id  String?
+  status      order_status @default(pending) // State Machine: alur status pesanan
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+  // Relations
+  merchant    merchants    @relation(fields: [merchant_id], references: [id])
+
+  @@index([payment_id])
+  @@index([merchant_id])
+  @@index([status])
+}
+
+model merchant_followers {
+  id          String   @id @default(uuid())
+  user_id     String
+  merchant_id String
+  createdAt   DateTime @default(now())
+
+  user     users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  merchant merchants @relation(fields: [merchant_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, merchant_id])
+  @@map("merchant_followers")
+}
+
+model messages {
+  id          String   @id @default(uuid())
+  sender_id   String
+  receiver_id String
+  text        String
+  is_read     Boolean  @default(false) // false = belum dibaca, true = sudah dibaca
+  created_at  DateTime @default(now())
+}
+
+model user_addresses {
+  id         String   @id @default(uuid())
+  user_id    String
+  name       String   // "Rumah", "Kantor", dll
+  recipient  String   // Nama penerima
+  phone      String
+  address    String
+  is_primary Boolean  @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user       users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
