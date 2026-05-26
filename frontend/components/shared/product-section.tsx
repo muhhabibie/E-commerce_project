@@ -130,8 +130,22 @@ const ProductSection = ({
           {/* Loaded Promo Data */}
           {isPromo &&
             !isLoading &&
-            safeDisplayMerchant.map((item, idx) => (
-              <PromoProduct key={idx} merchant={item} />
+            (safeDisplayMerchant.filter((item) => item.stocks && item.stocks.length > 0).length > 0 ? (
+              safeDisplayMerchant
+                .filter((item) => item.stocks && item.stocks.length > 0)
+                .map((item, idx) => (
+                  <PromoProduct key={idx} merchant={item} />
+                ))
+            ) : (
+              <div className="col-span-full py-8 text-center bg-white/10 rounded-2xl border border-white/20 backdrop-blur-sm">
+                <p className="text-sm font-semibold text-white">
+                  Belum Ada Promo Spesial
+                </p>
+                <p className="text-xs text-white/80 mt-1 max-w-md mx-auto px-4 leading-relaxed">
+                  Saat ini belum ada produk UMKM yang sedang dalam masa promo.
+                  Tetap pantau halaman ini untuk penawaran menarik berikutnya!
+                </p>
+              </div>
             ))}
 
           {!isExplore &&

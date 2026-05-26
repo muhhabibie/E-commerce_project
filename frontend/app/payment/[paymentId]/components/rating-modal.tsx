@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Star, X, Camera, Gift } from "lucide-react";
 import Image from "next/image";
 import useGetMerchantById from "@/hooks/merchant/use-get-merchant-by-id";
@@ -16,10 +16,14 @@ const STAR_LABELS: Record<number, string> = {
   5: "Sangat Baik",
 };
 
-const RatingReviewPage = () => {
+interface RatingModalProps {
+  merchantId: string;
+  onClose?: () => void; // optional: called after skip/submit
+}
+
+const RatingModal = ({ merchantId, onClose }: RatingModalProps) => {
   const router = useRouter();
-  const { paymentId } = useParams();
-  const { merchant, isLoading } = useGetMerchantById(paymentId as string);
+  const { merchant, isLoading } = useGetMerchantById(merchantId);
 
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -27,9 +31,9 @@ const RatingReviewPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showUsername, setShowUsername] = useState(true);
   const [mounted, setMounted] = useState(false);
-
-  // Cart items from localStorage
-  const [cartItems, setCartItems] = useState<{ name: string; quantity: number; price: number; image?: string }[]>([]);
+  const [cartItems, setCartItems] = useState<
+    { name: string; quantity: number; price: number; image?: string }[]
+  >([]);
 
   useEffect(() => {
     setMounted(true);
@@ -39,32 +43,35 @@ const RatingReviewPage = () => {
     } catch {}
   }, []);
 
-  const handleSubmit = async () => {
-    if (rating === 0) {
-      toast.error("Silakan berikan rating terlebih dahulu");
-      return;
-    }
-
-    const targetMerchantId = merchant?.id || (paymentId as string);
-    if (!targetMerchantId) {
-      toast.error("ID merchant tidak ditemukan.");
-      return;
-    }
-
-    setIsSubmitting(true);
+  const clearOrder = () => {
     try {
-      await axiosInstance.post(`/api/merchant/rating/${targetMerchantId}`, {
-        rate: rating,
-        comment: review.trim() || "",
-      });
-
-      toast.success("Terima kasih! Ulasan Anda berhasil dikirim.");
       localStorage.removeItem("orderStatus");
       localStorage.removeItem("qoin.cart");
       localStorage.removeItem("grandTotal");
       localStorage.removeItem("qoin.currentOrderId");
       localStorage.removeItem("qoin.currentPaymentId");
-      router.push("/");
+    } catch {}
+  };
+
+  const handleSubmit = async () => {
+    if (rating === 0) {
+      toast.error("Silakan berikan rating terlebih dahulu");
+      return;
+    }
+    const targetId = merchant?.id || merchantId;
+    if (!targetId) {
+      toast.error("ID merchant tidak ditemukan.");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await axiosInstance.post(`/api/merchant/rating/${targetId}`, {
+        rate: rating,
+        comment: review.trim() || "",
+      });
+      toast.success("Terima kasih! Ulasan Anda berhasil dikirim.");
+      clearOrder();
+      onClose ? onClose() : router.push("/");
     } catch (err) {
       console.error("[submitRating] error:", err);
       toast.error("Gagal mengirim ulasan. Silakan coba lagi.");
@@ -74,14 +81,8 @@ const RatingReviewPage = () => {
   };
 
   const handleSkip = () => {
-    try {
-      localStorage.removeItem("orderStatus");
-      localStorage.removeItem("qoin.cart");
-      localStorage.removeItem("grandTotal");
-      localStorage.removeItem("qoin.currentOrderId");
-      localStorage.removeItem("qoin.currentPaymentId");
-    } catch {}
-    router.push("/");
+    clearOrder();
+    onClose ? onClose() : router.push("/");
   };
 
   const activeRating = hoverRating || rating;
@@ -93,7 +94,9 @@ const RatingReviewPage = () => {
       <div
         className="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden"
         style={{
-          animation: mounted ? "ratingModalIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both" : "none",
+          animation: mounted
+            ? "ratingModalIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both"
+            : "none",
         }}
       >
         {/* Header bar */}
@@ -115,8 +118,18 @@ const RatingReviewPage = () => {
               Beri penilaian &amp; dapatkan 25 Koin!
             </span>
           </div>
-          <svg className="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          <svg
+            className="w-4 h-4 text-amber-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
           </svg>
         </div>
 
@@ -130,61 +143,68 @@ const RatingReviewPage = () => {
                 <div className="h-3 bg-gray-100 rounded w-1/2" />
               </div>
             </div>
-          ) : (
-            <>
-              {cartItems.length > 0 ? (
-                cartItems.map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="w-14 h-14 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
-                      {item.image ? (
-                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-2xl font-bold text-gray-300">
-                          {item.name?.charAt(0)?.toUpperCase() || "?"}
-                        </span>
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate">
-                        {item.name}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {item.quantity}x &nbsp;·&nbsp; dari {merchant?.name || "Merchant"}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
-                    {merchant?.profilePhotoUrl ? (
-                      <Image
-                        src={merchant.profilePhotoUrl}
-                        alt={merchant.name}
-                        width={56}
-                        height={56}
-                        className="object-cover"
-                      />
-                    ) : (
-                      <span className="text-2xl font-bold text-gray-300">
-                        {merchant?.name?.charAt(0)?.toUpperCase() || "?"}
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">{merchant?.name || "Merchant"}</p>
-                    <p className="text-xs text-gray-400">{merchant?.type || "UMKM Lokal"}</p>
-                  </div>
+          ) : cartItems.length > 0 ? (
+            cartItems.map((item, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <div className="w-14 h-14 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
+                  {item.image ? (
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-2xl font-bold text-gray-300">
+                      {item.name?.charAt(0)?.toUpperCase() || "?"}
+                    </span>
+                  )}
                 </div>
-              )}
-            </>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-800 truncate">
+                    {item.name}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {item.quantity}x &nbsp;·&nbsp; dari{" "}
+                    {merchant?.name || "Merchant"}
+                  </p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
+                {merchant?.profilePhotoUrl ? (
+                  <Image
+                    src={merchant.profilePhotoUrl}
+                    alt={merchant.name}
+                    width={56}
+                    height={56}
+                    className="object-cover"
+                  />
+                ) : (
+                  <span className="text-2xl font-bold text-gray-300">
+                    {merchant?.name?.charAt(0)?.toUpperCase() || "?"}
+                  </span>
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-800">
+                  {merchant?.name || "Merchant"}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {merchant?.type || "UMKM Lokal"}
+                </p>
+              </div>
+            </div>
           )}
         </div>
 
         <div className="px-5 mt-4">
           {/* Star rating */}
           <div>
-            <p className="text-xs font-semibold text-gray-500 mb-2">Kualitas Produk</p>
+            <p className="text-xs font-semibold text-gray-500 mb-2">
+              Kualitas Produk
+            </p>
             <div className="flex items-center gap-1.5">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -212,19 +232,20 @@ const RatingReviewPage = () => {
             </div>
           </div>
 
-          {/* Review text area */}
+          {/* Review textarea */}
           <div className="mt-4 rounded-xl border border-gray-200 overflow-hidden">
             <textarea
               value={review}
               onChange={(e) => {
                 if (e.target.value.length <= 500) setReview(e.target.value);
               }}
-              placeholder={`Ceritakan pengalaman berbelanja di ${merchant?.name || "sini"}. Apa yang kamu suka?`}
+              placeholder={`Ceritakan pengalaman berbelanja di ${
+                merchant?.name || "sini"
+              }. Apa yang kamu suka?`}
               rows={4}
               className="w-full px-4 pt-3 text-sm text-gray-700 placeholder:text-gray-400 resize-none focus:outline-none bg-white"
             />
             <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-t border-gray-100">
-              {/* Photo upload placeholder */}
               <button
                 type="button"
                 onClick={() => toast.info("Fitur upload foto segera hadir!")}
@@ -238,22 +259,34 @@ const RatingReviewPage = () => {
           </div>
 
           {/* Show username toggle */}
-          <label className="flex items-center gap-2.5 mt-3 cursor-pointer group">
+          <label className="flex items-center gap-2.5 mt-3 cursor-pointer">
             <div
               className={`relative w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
-                showUsername ? "bg-[#EE4D2D] border-[#EE4D2D]" : "border-gray-300"
+                showUsername
+                  ? "bg-[#EE4D2D] border-[#EE4D2D]"
+                  : "border-gray-300"
               }`}
               onClick={() => setShowUsername((p) => !p)}
             >
               {showUsername && (
-                <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 12 10">
-                  <path d="M1 5l3.5 3.5L11 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <svg
+                  className="w-2.5 h-2.5 text-white"
+                  fill="none"
+                  viewBox="0 0 12 10"
+                >
+                  <path
+                    d="M1 5l3.5 3.5L11 1"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               )}
             </div>
-            <div>
-              <p className="text-xs text-gray-700">Tampilkan username pada penilaian</p>
-            </div>
+            <p className="text-xs text-gray-700">
+              Tampilkan username pada penilaian
+            </p>
           </label>
         </div>
 
@@ -295,4 +328,4 @@ const RatingReviewPage = () => {
   );
 };
 
-export default RatingReviewPage;
+export default RatingModal;

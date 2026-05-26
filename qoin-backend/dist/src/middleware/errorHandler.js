@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.errorHandler = exports.APIError = void 0;
+exports.catchAsync = exports.errorHandler = exports.APIError = void 0;
 class APIError extends Error {
     constructor(message, statusCode) {
         super(message);
@@ -24,3 +24,10 @@ next) => {
     });
 };
 exports.errorHandler = errorHandler;
+// Higher-Order Function (HOF) untuk otomatis menangkap error asinkronus pada Express controller
+const catchAsync = (fn) => {
+    return (req, res, next) => {
+        fn(req, res, next).catch(next);
+    };
+};
+exports.catchAsync = catchAsync;

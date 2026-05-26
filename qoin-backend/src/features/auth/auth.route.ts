@@ -6,6 +6,8 @@ import {
   loginAccount,
   logoutAccount,
   getQoinTransactions,
+  redeemQoin,
+  topUpBalance,
 } from "./auth.controller";
 import { validate } from "../../middleware/validate";
 import { signInSchema, signUpSchema } from "./auth.schema";
@@ -20,5 +22,7 @@ router.get("/user/qoin-transactions", verifyToken, getQoinTransactions);
 router.post("/signup", validate(signUpSchema, "body"), createAccount);
 router.post("/signin", validate(signInSchema, "body"), loginAccount);
 router.post("/logout", verifyToken, logoutAccount);
+router.post("/user/redeem-qoin", verifyToken, redeemQoin);
+router.post("/user/top-up", verifyToken, topUpBalance);
 
 export default router;

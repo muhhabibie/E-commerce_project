@@ -43,8 +43,8 @@ const DisplayMerchant = ({
   const hasRatings = displayMerchant?.ratings && displayMerchant.ratings.length > 0;
   const displayRating = hasRatings 
     ? (displayMerchant.ratings!.reduce((a, b) => a + b.rate, 0) / displayMerchant.ratings!.length).toFixed(1) 
-    : "4.5";
-  const displayReviewCount = hasRatings ? displayMerchant.ratings!.length : 100;
+    : null;
+  const displayReviewCount = hasRatings ? displayMerchant.ratings!.length : 0;
 
   // Generate price
   let displayPrice = displayMerchant?.minPrice;
@@ -57,7 +57,7 @@ const DisplayMerchant = ({
 
   return (
     <Card
-      className="p-0 rounded-[20px] overflow-hidden group hover:shadow-xl hover:-translate-y-1.5 active:translate-y-[1px] active:scale-[0.98] border hover:border-primary/20 transition-all duration-200 ease-out cursor-pointer"
+      className="p-0 rounded-[20px] overflow-hidden group hover:shadow-xl hover:-translate-y-1.5 active:translate-y-[1px] active:scale-[0.98] border hover:border-primary/20 transition-all duration-200 ease-out cursor-pointer bg-white"
       onClick={() => handleToMerchant(displayMerchant?.id as string)}
     >
       <CardHeader className="!p-0 relative overflow-hidden w-full h-[140px] md:h-[180px] lg:h-[220px]">
@@ -90,18 +90,26 @@ const DisplayMerchant = ({
           <p className="text-base md:text-lg lg:text-xl xl:text-2xl font-semibold text-secondary line-clamp-1">
             {displayMerchant?.name}
           </p>
-
+ 
           <div>
             <div className="flex items-center text-[#606060]">
-              <span className="size-[24px] md:size-[28px] lg:size-[30px] relative flex items-center justify-center">
-                <RatingStar className="size-[14px] md:size-[16px] lg:size-[18px] text-[#F8C600]" />
-              </span>
-              <p className="ml-1.5 md:ml-2 text-[10px] md:text-xs lg:text-base">
-                {displayRating}{" "}
-              </p>
-              <p className="ml-2 md:ml-3 text-[10px] md:text-xs lg:text-base">
-                ({displayReviewCount}) Ulasan
-              </p>
+              {displayRating !== null ? (
+                <>
+                  <span className="size-[24px] md:size-[28px] lg:size-[30px] relative flex items-center justify-center">
+                    <RatingStar className="size-[14px] md:size-[16px] lg:size-[18px] text-[#F8C600]" />
+                  </span>
+                  <p className="ml-1.5 md:ml-2 text-[10px] md:text-xs lg:text-base font-semibold">
+                    {displayRating}{" "}
+                  </p>
+                  <p className="ml-2 md:ml-3 text-[10px] md:text-xs lg:text-base text-gray-400">
+                    ({displayReviewCount}) Ulasan
+                  </p>
+                </>
+              ) : (
+                <p className="text-[10px] md:text-xs lg:text-sm text-gray-400 font-medium italic py-1">
+                  Belum ada ulasan
+                </p>
+              )}
             </div>
             <p className="text-primary text-xs md:text-sm lg:text-base xl:text-lg font-bold mt-2 md:mt-3">
               Mulai dari Rp. {displayPrice.toLocaleString("id-ID")}

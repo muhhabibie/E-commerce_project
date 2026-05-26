@@ -9,8 +9,8 @@ const setAuthToken = (userId, res) => {
     const isProd = process.env.NODE_ENV === "production";
     res.cookie("token", token, {
         httpOnly: true,
-        secure: true, // allow HTTP in local dev
-        sameSite: "none", // enable cross-site cookie on localhost
+        secure: isProd, // hanya secure di production
+        sameSite: isProd ? "none" : "lax", // lax di development agar browser mau menerima cookie httpOnly lokal tanpa https
         path: "/",
     });
 };

@@ -6,54 +6,45 @@ import { FilterBar } from "@/app/dashboard/components/dashboard/filter-bar";
 import { DateRangePicker } from "@/app/dashboard/components/dashboard/date-range-picker";
 import { StatCard } from "@/app/dashboard/components/dashboard/stat-card";
 import { ShoppingCart, TrendingUp, DollarSign } from "lucide-react";
+import { Merchant } from "@/types";
 
-const mockSalesData = [
-  {
-    id: "ORD-001",
-    date: "2024-01-15",
-    customer: "John Doe",
-    amount: "Rp 5.2M",
-    status: "Completed",
-  },
-  {
-    id: "ORD-002",
-    date: "2024-01-14",
-    customer: "Jane Smith",
-    amount: "Rp 3.8M",
-    status: "Completed",
-  },
-  {
-    id: "ORD-003",
-    date: "2024-01-13",
-    customer: "Bob Johnson",
-    amount: "Rp 2.1M",
-    status: "Pending",
-  },
-  {
-    id: "ORD-004",
-    date: "2024-01-12",
-    customer: "Alice Brown",
-    amount: "Rp 7.5M",
-    status: "Completed",
-  },
-  {
-    id: "ORD-005",
-    date: "2024-01-11",
-    customer: "Charlie Wilson",
-    amount: "Rp 4.3M",
-    status: "Completed",
-  },
-];
+interface SalesPageProps {
+  merchant?: Merchant | null;
+}
 
-export function SalesPage() {
+export function SalesPage({ merchant }: SalesPageProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [, setDateRange] = useState({ start: "", end: "" });
 
-  const filteredData = mockSalesData.filter(
+  const sales = Array.isArray(merchant?.selledStocks) ? merchant.selledStocks : [];
+  const activeSales = sales.filter((s: any) => s.status !== "cancelled");
+
+  // Calculate dynamic stats
+  const totalSalesVal = activeSales.reduce((sum: number, s: any) => sum + s.total_price, 0);
+  const totalOrders = activeSales.length;
+  const avgOrderVal = totalOrders > 0 ? Math.round(totalSalesVal / totalOrders) : 0;
+
+  const salesData = sales.map((s: any) => ({
+    id: s.id.substring(0, 8).toUpperCase(),
+    date: new Date(s.created_at).toLocaleDateString("id-ID"),
+    customer: `Pelanggan #${s.user_id.substring(0, 4).toUpperCase()}`,
+    amount: `Rp ${s.total_price.toLocaleString("id-ID")}`,
+    status: s.status.charAt(0).toUpperCase() + s.status.slice(1),
+  }));
+
+  const filteredData = salesData.filter(
     (item) =>
       item.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.id.toLowerCase().includes(searchQuery.toLowerCase())
+      item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.status.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const formatCurrency = (value: number) => {
+    if (value >= 1000000) {
+      return `Rp ${(value / 1000000).toFixed(1)} Jt`;
+    }
+    return `Rp ${value.toLocaleString("id-ID")}`;
+  };
 
   return (
     <div className="p-8 space-y-6">
@@ -75,24 +66,24 @@ export function SalesPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-4">
         <StatCard
           title="Total Sales"
-          value="Rp 22.9M"
-          change={15}
-          trend="up"
+          value={formatCurrency(totalSalesVal)}
+          change={totalSalesVal > 0 ? 12 : 0}
+          trend={totalSalesVal > 0 ? "up" : "down"}
           icon={<DollarSign className="w-6 h-6" />}
         />
         <StatCard
           title="Orders"
-          value="5"
-          change={3}
-          trend="up"
+          value={totalOrders.toString()}
+          change={totalOrders > 0 ? 8 : 0}
+          trend={totalOrders > 0 ? "up" : "down"}
           icon={<ShoppingCart className="w-6 h-6" />}
         />
         <StatCard
           className="md:col-span-2 lg:col-span-1"
           title="Avg Order Value"
-          value="Rp 4.58M"
-          change={8}
-          trend="up"
+          value={formatCurrency(avgOrderVal)}
+          change={avgOrderVal > 0 ? 5 : 0}
+          trend={avgOrderVal > 0 ? "up" : "down"}
           icon={<TrendingUp className="w-6 h-6" />}
         />
       </div>

@@ -32,7 +32,8 @@ const PaymentPage = () => {
     isSearching,
     onDriverPage,
     onPickupConfirmationPage,
-  } = usePayment();
+    orderStatus,
+  } = usePayment({ isPickup: deliveryMethod === "pickup" });
 
   const { merchant } = useGetMerchantById(paymentId as string);
 
@@ -87,6 +88,7 @@ const PaymentPage = () => {
               merchantName={merchant?.name || ""}
               total={Number(grandTotal)}
               merchantId={merchant?.id || (paymentId as string)}
+              orderStatus={orderStatus}
             />
           )}
           {onPickupConfirmationPage && deliveryMethod === "pickup" && (

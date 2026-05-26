@@ -14,47 +14,6 @@ export interface ChatMessage {
   created_at: string | Date;
 }
 
-/**
- * useChat — Custom hook real-time chat berbasis Supabase Realtime + RxJS Subject
- *
- * Fitur:
- * - Real-time pesan via Supabase postgres_changes
- * - Typing indicator via Supabase Broadcast (ephemeral, tidak simpan ke DB)
- * - Auto mark-as-read saat buka chat dan saat menerima pesan baru
- * - Read receipt state per pesan
- *
- * Arsitektur Reactive:
- * ┌─────────────────────────────────────────────────────────────┐
- * │  User kirim pesan                                           │
- * │      ↓                                                      │
- * │  axiosInstance.post("/api/chat/messages")  [REST]           │
- * │      ↓                                                      │
- * │  Backend simpan ke Supabase DB (Prisma)                     │
- * │      ↓                                                      │
- * │  Supabase Realtime mendeteksi INSERT                        │
- * │      ↓  (WebSocket dari Supabase, bukan server kita)        │
- * │  supabase.channel().on("postgres_changes")                  │
- * │      ↓                                                      │
- * │  messageSubject.next(newMsg)   [RxJS reactive push]         │
- * │      ↓                                                      │
- * │  subscription → setMessages()  [state update]               │
- * │      ↓                                                      │
- * │  React re-render               [UI otomatis terupdate]      │
- * └─────────────────────────────────────────────────────────────┘
- *
- * Typing indicator via Supabase Broadcast:
- * ┌─────────────────────────────────────────────────────────────┐
- * │  User mengetik → sendTyping()                               │
- * │      ↓                                                      │
- * │  channel.send({ type: "broadcast", event: "typing" })       │
- * │      ↓  (tidak tersimpan ke DB, ephemeral)                  │
- * │  Penerima: on("broadcast", event: "typing")                 │
- * │      ↓                                                      │
- * │  setIsPartnerTyping(true)                                   │
- * │      ↓ (auto reset setelah 2 detik tanpa event baru)        │
- * │  setIsPartnerTyping(false)                                  │
- * └─────────────────────────────────────────────────────────────┘
- */
 const useChat = (currentUserId: string | null, receiverId: string | null) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isConnected, setIsConnected] = useState(false);

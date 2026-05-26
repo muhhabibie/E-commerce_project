@@ -25,13 +25,13 @@ export default function DashboardClient({
   let content;
 
   if (activePage === "overview") {
-    content = <OverviewPage />;
+    content = <OverviewPage merchant={merchant} />;
   } else if (activePage === "pos") {
     content = <POSPage />;
   } else if (activePage === "inventory") {
     content = <InventoryPage merchant={merchant} />;
   } else if (activePage === "sales") {
-    content = <SalesPage />;
+    content = <SalesPage merchant={merchant} />;
   } else if (activePage === "analytics") {
     content = <AnalyticsPage />;
   } else if (activePage === "chat") {

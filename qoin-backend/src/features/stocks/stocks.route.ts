@@ -9,6 +9,8 @@ import {
   deleteManyStocks,
   selledStock,
   getUserTransactions,
+  orderStream,
+  updateOrderStatus,
 } from "./stocks.controller";
 import { verifyToken } from "../../middleware/verifyToken";
 import { validate } from "../../middleware/validate";
@@ -53,5 +55,9 @@ router.patch("/change-display", verifyToken, changeDisplayStocks);
 // INI GANTI NANTI DI E DPOINT TRANSACTION
 router.post("/selled-stock/:payment_id", verifyToken, selledStock);
 router.get("/user/transactions", verifyToken, getUserTransactions);
+
+// SSE and Order Status management
+router.get("/order-stream/:payment_id", verifyToken, orderStream);
+router.patch("/orders/:payment_id/status", verifyToken, updateOrderStatus);
 
 export default router;

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { formatPrice } from "@/lib/format-price";
 import FluentChat from "@/components/icons/fluent-chat";
 import Store from "@/components/icons/store";
-import { MapPin, ShieldCheck, CheckCircle, Package } from "lucide-react";
+import { MapPin, ShieldCheck } from "lucide-react";
 import useGetUser from "@/hooks/auth/use-get-user";
 import Box from "@/components/icons/box";
 import Vespa from "@/components/icons/vespa";
@@ -23,6 +23,7 @@ import useGetMerchantById from "@/hooks/merchant/use-get-merchant-by-id";
 import { useGlobalChat } from "@/hooks/chat/use-global-chat";
 import { from, of, Subscription } from "rxjs";
 import { concatMap, delay, tap } from "rxjs/operators";
+import RatingModal from "./rating-modal";
 
 const LeafletMap = dynamic(() => import("./leaflet-map"), { ssr: false });
 
@@ -36,6 +37,7 @@ interface DriverPageProps {
   merchantName?: string;
   total: number;
   merchantId?: string;
+  orderStatus?: string;
 }
 
 interface StepItemProps {
@@ -96,8 +98,9 @@ const StepItem = ({ icon, title, desc, active, idx }: StepItemProps) => {
 
 import { useAddress } from "@/hooks/address/use-address";
 
-const DriverPage = ({ merchantName, merchantId }: DriverPageProps) => {
+const DriverPage = ({ merchantName, merchantId, orderStatus }: DriverPageProps) => {
   const router = useRouter();
+  const [showRatingModal, setShowRatingModal] = useState(false);
   const { merchant } = useGetMerchantById(merchantId as string);
   const { openChat } = useGlobalChat();
   const { data: userData } = useGetUser();
@@ -172,39 +175,29 @@ const DriverPage = ({ merchantName, merchantId }: DriverPageProps) => {
   }, []);
 
   useEffect(() => {
-    if (showArrivedDialog) return;
+    if (!orderStatus) return;
 
-    // Asynchronous and Reactive Programming using RxJS
-    const stepsCount = stepItem.length;
+    if (orderStatus === "processing") {
+      setActiveSteps([true, false, false, false]);
+      const t = setTimeout(() => {
+        setActiveSteps([true, true, false, false]);
+      }, 4000);
+      return () => clearTimeout(t);
+    } 
     
-    // Higher-Order Function (HOF) to generate the state updater function
-    const createStepUpdater = (targetIndex: number) => (prevState: boolean[]) => {
-      const nextState = [...prevState];
-      nextState[targetIndex] = true;
-      return nextState;
-    };
+    if (orderStatus === "on_shipping") {
+      setActiveSteps([true, true, true, false]);
+      const t = setTimeout(() => {
+        setActiveSteps([true, true, true, true]);
+      }, 4000);
+      return () => clearTimeout(t);
+    }
 
-    // Create an observable that emits each step index asynchronously with a delay
-    const simulation$ = from(Array.from({ length: stepsCount })).pipe(
-      // concatMap ensures that the delays happen sequentially (reactive step-by-step transition)
-      concatMap((_, index) => of(index).pipe(delay(3000))),
-      tap((index) => {
-        // Applying the HOF
-        setActiveSteps(createStepUpdater(index));
-
-        // If this is the last step, show the arrived dialog
-        if (index === stepsCount - 1) {
-          setShowArrivedDialog(true);
-        }
-      })
-    );
-
-    const subscription = simulation$.subscribe();
-
-    return () => {
-      subscription.unsubscribe(); // Clean up subscription on unmount
-    };
-  }, []);
+    if (orderStatus === "delivered") {
+      setActiveSteps([true, true, true, true]);
+      setShowArrivedDialog(true);
+    }
+  }, [orderStatus]);
 
   return (
     <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[2fr_minmax(280px,1fr)] lg:gap-6">
@@ -378,7 +371,7 @@ const DriverPage = ({ merchantName, merchantId }: DriverPageProps) => {
               className="w-full rounded-full bg-primary hover:bg-primary/90 py-3 md:py-3.5 text-sm md:text-base font-semibold text-white transition-colors duration-200"
               onClick={() => {
                 setShowArrivedDialog(false);
-                router.push(`/payment/${merchantName}/rating`);
+                setShowRatingModal(true);
               }}
             >
               Beri Rating & Ulasan
@@ -390,10 +383,11 @@ const DriverPage = ({ merchantName, merchantId }: DriverPageProps) => {
                   localStorage.removeItem("orderStatus");
                   localStorage.removeItem("qoin.cart");
                   localStorage.removeItem("grandTotal");
+                  localStorage.removeItem("qoin.currentOrderId");
+                  localStorage.removeItem("qoin.currentPaymentId");
                 } catch (err) {
                   console.log(err);
                 }
-
                 setShowArrivedDialog(false);
                 router.push("/");
               }}
@@ -403,6 +397,17 @@ const DriverPage = ({ merchantName, merchantId }: DriverPageProps) => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Rating Modal — tampil di atas halaman ini tanpa pindah page */}
+      {showRatingModal && merchantId && (
+        <RatingModal
+          merchantId={merchantId}
+          onClose={() => {
+            setShowRatingModal(false);
+            router.push("/");
+          }}
+        />
+      )}
     </div>
   );
 };

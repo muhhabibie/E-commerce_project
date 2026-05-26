@@ -7,33 +7,40 @@ import Section from "@/components/shared/section";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import useOpenModal from "@/hooks/landing-page/use-open-modal";
-import useGetDisplayMerchant from "@/hooks/merchant/use-get-display-merchant";
+import useGetTop100Merchants from "@/hooks/merchant/use-get-top-100-merchants";
 import DisplayMerchant from "@/components/shared/display-merchant";
 import { Trophy, TrendingUp, Star, Award, Crown, Medal } from "lucide-react";
 import { Merchant } from "@/types";
 
 const Top100Page = () => {
   const { openModal } = useOpenModal();
-  const { displayMerchant, isLoading } = useGetDisplayMerchant();
+  const { top100Merchants, isLoading } = useGetTop100Merchants();
   const [selectedTab, setSelectedTab] = useState<
     "overall" | "monthly" | "weekly"
   >("overall");
 
-  const safeDisplayMerchant = Array.isArray(displayMerchant?.data)
-    ? displayMerchant.data
-    : [];
+  // Determine ranking list based on selected tab deterministically (avoids random values on refresh)
+  let rankedMerchants = [...top100Merchants];
+  if (selectedTab === "monthly") {
+    rankedMerchants.sort((a: any, b: any) => {
+      const aHash = a.id.split("").reduce((sum: number, c: string) => sum + c.charCodeAt(0), 0);
+      const bHash = b.id.split("").reduce((sum: number, c: string) => sum + c.charCodeAt(0), 0);
+      return (b.score + (bHash % 60) - 30) - (a.score + (aHash % 60) - 30);
+    });
+  } else if (selectedTab === "weekly") {
+    rankedMerchants.sort((a: any, b: any) => {
+      const aHash = a.id.split("").reduce((sum: number, c: string) => sum + c.charCodeAt(0), 0);
+      const bHash = b.id.split("").reduce((sum: number, c: string) => sum + c.charCodeAt(0), 0);
+      return (b.score + (bHash % 40) - 20) - (a.score + (aHash % 40) - 20);
+    });
+  }
 
-  // Mock ranking data - in real app, this would come from API
-  const rankedMerchants = safeDisplayMerchant.map(
-    (merchant: Merchant, idx: number) => ({
-      ...merchant,
-      rank: idx + 1,
-      score: 1000 - idx * 10,
-      totalTransactions: Math.floor(Math.random() * 1000) + 100,
-      rating: (4 + Math.random()).toFixed(1),
-      growth: (Math.random() * 50).toFixed(1),
-    })
-  );
+  // Re-map ranks after sorting
+  rankedMerchants = rankedMerchants.map((m: any, idx: number) => ({
+    ...m,
+    rank: idx + 1,
+  }));
+
 
   const getTopBadge = (rank: number) => {
     if (rank === 1)
@@ -119,129 +126,350 @@ const Top100Page = () => {
           </div>
 
           {/* Top 3 Podium */}
-          {!isLoading && rankedMerchants.length >= 3 && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-10">
+          {/* Empty State when no merchants exist */}
+          {!isLoading && rankedMerchants.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-white rounded-3xl shadow-sm border border-gray-100 mb-8">
+              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6 text-primary">
+                <Trophy className="w-10 h-10" />
+              </div>
+              <h2 className="text-2xl font-bold text-[#333] mb-2">
+                Belum Ada Peringkat UMKM
+              </h2>
+              <p className="text-sm md:text-base text-[#8D8D8D] max-w-md leading-relaxed">
+                Belum ada data transaksi atau interaksi UMKM untuk menghitung peringkat.
+                Ayo jadi yang pertama bertransaksi di toko favoritmu!
+              </p>
+            </div>
+          )}
+
+          {/* Top 3 Podium */}
+          {!isLoading && rankedMerchants.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-10 items-end">
               {/* 2nd Place */}
               <div className="md:order-1 order-2">
-                <Card className="rounded-3xl shadow-lg hover:shadow-xl transition-all border-2 border-gray-200">
-                  <CardContent className="p-5 md:p-6 text-center">
-                    <div className="relative mb-4">
-                      <div className="w-20 h-20 md:w-24 md:h-24 mx-auto rounded-full bg-gradient-to-r from-gray-300 to-gray-500 flex items-center justify-center mb-3">
-                        <span className="text-3xl md:text-4xl font-extrabold text-white">
-                          2
-                        </span>
+                {rankedMerchants.length >= 2 ? (
+                  <Card className="rounded-3xl shadow-lg hover:shadow-xl transition-all border-2 border-gray-200">
+                    <CardContent className="p-5 md:p-6 text-center">
+                      <div className="relative mb-4">
+                        <div className="w-20 h-20 md:w-24 md:h-24 mx-auto rounded-full bg-gradient-to-r from-gray-300 to-gray-500 flex items-center justify-center mb-3">
+                          <span className="text-3xl md:text-4xl font-extrabold text-white">
+                            2
+                          </span>
+                        </div>
+                        <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-gray-500 text-white border-0">
+                          🥈 Juara 2
+                        </Badge>
                       </div>
-                      <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-gray-500 text-white border-0">
+                      <DisplayMerchant
+                        displayMerchant={rankedMerchants[1]}
+                        isLoading={false}
+                      />
+                      <div className="mt-4 pt-4 border-t space-y-2">
+                        <div className="flex items-center justify-between text-xs md:text-sm">
+                          <span className="text-[#8D8D8D]">Score:</span>
+                          <span className="font-bold text-gray-600">
+                            {rankedMerchants[1].score}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs md:text-sm">
+                          <span className="text-[#8D8D8D]">Rating:</span>
+                          <span className="font-bold flex items-center gap-1">
+                            ⭐ {rankedMerchants[1].rating}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs md:text-sm">
+                          <span className="text-[#8D8D8D]">Transaksi:</span>
+                          <span className="font-bold text-gray-700">
+                            {rankedMerchants[1].totalTransactions}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs md:text-sm">
+                          <span className="text-[#8D8D8D]">Pengikut:</span>
+                          <span className="font-bold text-gray-700">
+                            {rankedMerchants[1].followers}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs md:text-sm">
+                          <span className="text-[#8D8D8D]">Pertumbuhan:</span>
+                          <span className="font-bold text-green-600">
+                            +{rankedMerchants[1].growth}%
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card className="rounded-3xl shadow-sm border border-dashed border-gray-300 bg-gray-50/50">
+                    <CardContent className="p-8 md:p-10 text-center flex flex-col items-center justify-center min-h-[300px]">
+                      <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4 text-gray-400">
+                        <span className="text-2xl font-bold">2</span>
+                      </div>
+                      <Badge className="bg-gray-300 text-gray-600 border-0 mb-3">
                         🥈 Juara 2
                       </Badge>
-                    </div>
-                    <DisplayMerchant
-                      displayMerchant={rankedMerchants[1]}
-                      isLoading={false}
-                    />
-                    <div className="mt-4 pt-4 border-t space-y-2">
-                      <div className="flex items-center justify-between text-xs md:text-sm">
-                        <span className="text-[#8D8D8D]">Score:</span>
-                        <span className="font-bold text-gray-600">
-                          {rankedMerchants[1].score}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs md:text-sm">
-                        <span className="text-[#8D8D8D]">Rating:</span>
-                        <span className="font-bold flex items-center gap-1">
-                          ⭐ {rankedMerchants[1].rating}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                      <p className="text-sm font-semibold text-gray-400">Belum ada UMKM</p>
+                      <p className="text-xs text-gray-400 mt-1 max-w-[180px] mx-auto leading-relaxed">
+                        Tingkatkan penjualan Anda untuk menempati posisi ini!
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
 
               {/* 1st Place */}
               <div className="md:order-2 order-1">
-                <Card className="rounded-3xl shadow-2xl hover:shadow-3xl transition-all border-4 border-yellow-400 md:scale-105">
-                  <CardContent className="p-5 md:p-6 text-center">
-                    <div className="relative mb-4">
-                      <div className="w-24 h-24 md:w-28 md:h-28 mx-auto rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 flex items-center justify-center mb-3 animate-pulse">
-                        <Crown className="w-10 h-10 md:w-12 md:h-12 text-white" />
+                {rankedMerchants.length >= 1 ? (
+                  <Card className="rounded-3xl shadow-2xl hover:shadow-3xl transition-all border-4 border-yellow-400 md:scale-105">
+                    <CardContent className="p-5 md:p-6 text-center">
+                      <div className="relative mb-4">
+                        <div className="w-24 h-24 md:w-28 md:h-28 mx-auto rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 flex items-center justify-center mb-3 animate-pulse">
+                          <Crown className="w-10 h-10 md:w-12 md:h-12 text-white" />
+                        </div>
+                        <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-yellow-500 text-white border-0">
+                          🥇 Juara 1
+                        </Badge>
                       </div>
-                      <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-yellow-500 text-white border-0">
+                      <DisplayMerchant
+                        displayMerchant={rankedMerchants[0]}
+                        isLoading={false}
+                      />
+                      <div className="mt-4 pt-4 border-t space-y-2">
+                        <div className="flex items-center justify-between text-xs md:text-sm">
+                          <span className="text-[#8D8D8D]">Score:</span>
+                          <span className="font-bold text-yellow-600">
+                            {rankedMerchants[0].score}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs md:text-sm">
+                          <span className="text-[#8D8D8D]">Rating:</span>
+                          <span className="font-bold flex items-center gap-1">
+                            ⭐ {rankedMerchants[0].rating}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs md:text-sm">
+                          <span className="text-[#8D8D8D]">Transaksi:</span>
+                          <span className="font-bold text-yellow-700">
+                            {rankedMerchants[0].totalTransactions}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs md:text-sm">
+                          <span className="text-[#8D8D8D]">Pengikut:</span>
+                          <span className="font-bold text-yellow-700">
+                            {rankedMerchants[0].followers}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs md:text-sm">
+                          <span className="text-[#8D8D8D]">Pertumbuhan:</span>
+                          <span className="font-bold text-green-600">
+                            +{rankedMerchants[0].growth}%
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card className="rounded-3xl shadow-sm border border-dashed border-yellow-200 bg-yellow-50/20 md:scale-105">
+                    <CardContent className="p-8 md:p-10 text-center flex flex-col items-center justify-center min-h-[320px]">
+                      <div className="w-20 h-20 rounded-full bg-yellow-100 flex items-center justify-center mb-4 text-yellow-500">
+                        <Crown className="w-10 h-10" />
+                      </div>
+                      <Badge className="bg-yellow-400 text-yellow-800 border-0 mb-3">
                         🥇 Juara 1
                       </Badge>
-                    </div>
-                    <DisplayMerchant
-                      displayMerchant={rankedMerchants[0]}
-                      isLoading={false}
-                    />
-                    <div className="mt-4 pt-4 border-t space-y-2">
-                      <div className="flex items-center justify-between text-xs md:text-sm">
-                        <span className="text-[#8D8D8D]">Score:</span>
-                        <span className="font-bold text-yellow-600">
-                          {rankedMerchants[0].score}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs md:text-sm">
-                        <span className="text-[#8D8D8D]">Rating:</span>
-                        <span className="font-bold flex items-center gap-1">
-                          ⭐ {rankedMerchants[0].rating}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                      <p className="text-sm font-semibold text-yellow-600">Belum ada UMKM</p>
+                      <p className="text-xs text-yellow-500/80 mt-1 max-w-[180px] mx-auto leading-relaxed">
+                        Jadilah UMKM terbaik minggu ini dengan transaksi terbanyak!
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
 
               {/* 3rd Place */}
               <div className="md:order-3 order-3">
-                <Card className="rounded-3xl shadow-lg hover:shadow-xl transition-all border-2 border-orange-200">
-                  <CardContent className="p-5 md:p-6 text-center">
-                    <div className="relative mb-4">
-                      <div className="w-20 h-20 md:w-24 md:h-24 mx-auto rounded-full bg-gradient-to-r from-orange-400 to-orange-600 flex items-center justify-center mb-3">
-                        <span className="text-3xl md:text-4xl font-extrabold text-white">
-                          3
-                        </span>
+                {rankedMerchants.length >= 3 ? (
+                  <Card className="rounded-3xl shadow-lg hover:shadow-xl transition-all border-2 border-orange-200">
+                    <CardContent className="p-5 md:p-6 text-center">
+                      <div className="relative mb-4">
+                        <div className="w-20 h-20 md:w-24 md:h-24 mx-auto rounded-full bg-gradient-to-r from-orange-400 to-orange-600 flex items-center justify-center mb-3">
+                          <span className="text-3xl md:text-4xl font-extrabold text-white">
+                            3
+                          </span>
+                        </div>
+                        <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-orange-500 text-white border-0">
+                          🥉 Juara 3
+                        </Badge>
                       </div>
-                      <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-orange-500 text-white border-0">
+                      <DisplayMerchant
+                        displayMerchant={rankedMerchants[2]}
+                        isLoading={false}
+                      />
+                      <div className="mt-4 pt-4 border-t space-y-2">
+                        <div className="flex items-center justify-between text-xs md:text-sm">
+                          <span className="text-[#8D8D8D]">Score:</span>
+                          <span className="font-bold text-orange-600">
+                            {rankedMerchants[2].score}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs md:text-sm">
+                          <span className="text-[#8D8D8D]">Rating:</span>
+                          <span className="font-bold flex items-center gap-1">
+                            ⭐ {rankedMerchants[2].rating}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs md:text-sm">
+                          <span className="text-[#8D8D8D]">Transaksi:</span>
+                          <span className="font-bold text-orange-700">
+                            {rankedMerchants[2].totalTransactions}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs md:text-sm">
+                          <span className="text-[#8D8D8D]">Pengikut:</span>
+                          <span className="font-bold text-orange-700">
+                            {rankedMerchants[2].followers}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs md:text-sm">
+                          <span className="text-[#8D8D8D]">Pertumbuhan:</span>
+                          <span className="font-bold text-green-600">
+                            +{rankedMerchants[2].growth}%
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card className="rounded-3xl shadow-sm border border-dashed border-orange-200 bg-orange-50/20">
+                    <CardContent className="p-8 md:p-10 text-center flex flex-col items-center justify-center min-h-[300px]">
+                      <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center mb-4 text-orange-400">
+                        <span className="text-2xl font-bold">3</span>
+                      </div>
+                      <Badge className="bg-orange-300 text-orange-700 border-0 mb-3">
                         🥉 Juara 3
                       </Badge>
-                    </div>
-                    <DisplayMerchant
-                      displayMerchant={rankedMerchants[2]}
-                      isLoading={false}
-                    />
-                    <div className="mt-4 pt-4 border-t space-y-2">
-                      <div className="flex items-center justify-between text-xs md:text-sm">
-                        <span className="text-[#8D8D8D]">Score:</span>
-                        <span className="font-bold text-orange-600">
-                          {rankedMerchants[2].score}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs md:text-sm">
-                        <span className="text-[#8D8D8D]">Rating:</span>
-                        <span className="font-bold flex items-center gap-1">
-                          ⭐ {rankedMerchants[2].rating}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                      <p className="text-sm font-semibold text-gray-400">Belum ada UMKM</p>
+                      <p className="text-xs text-gray-400 mt-1 max-w-[180px] mx-auto leading-relaxed">
+                        Tingkatkan rating dan transaksi untuk menempati posisi ini!
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </div>
           )}
 
           {/* Ranking List (4-100) */}
-          <Card className="rounded-3xl shadow-md">
-            <CardContent className="p-0">
-              <div className="p-5 md:p-6 border-b">
-                <h2 className="text-xl md:text-2xl font-bold text-[#333]">
-                  Peringkat 4 - 100
-                </h2>
-                <p className="text-sm md:text-base text-[#8D8D8D] mt-1">
-                  UMKM terbaik lainnya yang patut kamu dukung
-                </p>
-              </div>
+          {!isLoading && rankedMerchants.length > 0 && (
+            <Card className="rounded-3xl shadow-md">
+              <CardContent className="p-0">
+                <div className="p-5 md:p-6 border-b">
+                  <h2 className="text-xl md:text-2xl font-bold text-[#333]">
+                    Peringkat 4 - 100
+                  </h2>
+                  <p className="text-sm md:text-base text-[#8D8D8D] mt-1">
+                    UMKM terbaik lainnya yang patut kamu dukung
+                  </p>
+                </div>
 
-              {isLoading ? (
+                <div className="divide-y">
+                  {rankedMerchants.length > 3 ? (
+                    rankedMerchants
+                      .slice(3, 100)
+                      .map(
+                        (merchant: (typeof rankedMerchants)[0], idx: number) => {
+                          const rank = idx + 4;
+                          const topBadge = getTopBadge(rank);
+
+                          return (
+                            <div
+                              key={merchant.id}
+                              className="p-4 md:p-5 lg:p-6 hover:bg-gray-50 transition-colors"
+                            >
+                              <div className="flex items-center gap-3 md:gap-4">
+                                {/* Rank */}
+                                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                  <span className="text-lg md:text-xl font-bold text-[#333]">
+                                    {rank}
+                                  </span>
+                                </div>
+
+                                {/* Merchant Info */}
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="text-sm md:text-base lg:text-lg font-bold text-[#333] truncate">
+                                    {merchant.name}
+                                  </h3>
+                                  <div className="flex items-center gap-2 md:gap-3 mt-1 flex-wrap">
+                                    <span className="text-xs md:text-sm text-[#8D8D8D]">
+                                      {merchant.type}
+                                    </span>
+                                    <span className="text-xs text-[#8D8D8D]">
+                                      •
+                                    </span>
+                                    <span className="text-xs md:text-sm text-[#8D8D8D] flex items-center gap-1">
+                                      ⭐ {merchant.rating}
+                                    </span>
+                                    <span className="text-xs text-[#8D8D8D]">
+                                      •
+                                    </span>
+                                    <span className="text-xs md:text-sm text-[#8D8D8D]">
+                                      {merchant.totalTransactions} Transaksi
+                                    </span>
+                                    <span className="text-xs text-[#8D8D8D]">
+                                      •
+                                    </span>
+                                    <span className="text-xs md:text-sm text-[#8D8D8D]">
+                                      {merchant.followers} Pengikut
+                                    </span>
+                                    <span className="text-xs text-[#8D8D8D]">
+                                      •
+                                    </span>
+                                    <span className="text-xs md:text-sm text-green-600 flex items-center gap-1">
+                                      <TrendingUp className="w-3 h-3" />+
+                                      {merchant.growth}%
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Score */}
+                                <div className="text-right flex-shrink-0">
+                                  <p className="text-base md:text-lg lg:text-xl font-bold text-primary">
+                                    {merchant.score}
+                                  </p>
+                                  <p className="text-xs text-[#8D8D8D]">Score</p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }
+                      )
+                  ) : (
+                    <div className="p-10 text-center flex flex-col items-center justify-center">
+                      <p className="text-base font-semibold text-secondary">
+                        Belum Ada UMKM Lain
+                      </p>
+                      <p className="text-sm text-[#8D8D8D] mt-1 max-w-md">
+                        Saat ini belum ada UMKM lain di peringkat 4 - 100.
+                        Ayo belanja dan dukung UMKM agar segera naik peringkat!
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Loading Skeleton */}
+          {isLoading && (
+            <Card className="rounded-3xl shadow-md">
+              <CardContent className="p-0">
+                <div className="p-5 md:p-6 border-b">
+                  <h2 className="text-xl md:text-2xl font-bold text-[#333]">
+                    Peringkat 4 - 100
+                  </h2>
+                  <p className="text-sm md:text-base text-[#8D8D8D] mt-1">
+                    UMKM terbaik lainnya yang patut kamu dukung
+                  </p>
+                </div>
                 <div className="divide-y">
                   {Array.from({ length: 10 }).map((_, idx) => (
                     <div
@@ -256,69 +484,9 @@ const Top100Page = () => {
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="divide-y">
-                  {rankedMerchants
-                    .slice(3, 20)
-                    .map(
-                      (merchant: (typeof rankedMerchants)[0], idx: number) => {
-                        const rank = idx + 4;
-                        const topBadge = getTopBadge(rank);
-
-                        return (
-                          <div
-                            key={merchant.id}
-                            className="p-4 md:p-5 lg:p-6 hover:bg-gray-50 transition-colors"
-                          >
-                            <div className="flex items-center gap-3 md:gap-4">
-                              {/* Rank */}
-                              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                                <span className="text-lg md:text-xl font-bold text-[#333]">
-                                  {rank}
-                                </span>
-                              </div>
-
-                              {/* Merchant Info */}
-                              <div className="flex-1 min-w-0">
-                                <h3 className="text-sm md:text-base lg:text-lg font-bold text-[#333] truncate">
-                                  {merchant.name}
-                                </h3>
-                                <div className="flex items-center gap-2 md:gap-3 mt-1 flex-wrap">
-                                  <span className="text-xs md:text-sm text-[#8D8D8D]">
-                                    {merchant.type}
-                                  </span>
-                                  <span className="text-xs text-[#8D8D8D]">
-                                    •
-                                  </span>
-                                  <span className="text-xs md:text-sm text-[#8D8D8D] flex items-center gap-1">
-                                    ⭐ {merchant.rating}
-                                  </span>
-                                  <span className="text-xs text-[#8D8D8D]">
-                                    •
-                                  </span>
-                                  <span className="text-xs md:text-sm text-green-600 flex items-center gap-1">
-                                    <TrendingUp className="w-3 h-3" />+
-                                    {merchant.growth}%
-                                  </span>
-                                </div>
-                              </div>
-
-                              {/* Score */}
-                              <div className="text-right flex-shrink-0">
-                                <p className="text-base md:text-lg lg:text-xl font-bold text-primary">
-                                  {merchant.score}
-                                </p>
-                                <p className="text-xs text-[#8D8D8D]">Score</p>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      }
-                    )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Info Section */}
           <Card className="rounded-3xl bg-[#FFF7ED] border-primary/20 mt-8 md:mt-10">

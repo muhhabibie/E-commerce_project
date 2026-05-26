@@ -4,6 +4,8 @@ import {
   addMerchantService,
   getMerchantByIdService,
   addMerchantRatingService,
+  getAllRatingsService,
+  getUserStatsService,
   getAllMerchantService,
   getUserMerchantService,
   getMerchantDisplayService,
@@ -13,6 +15,7 @@ import {
   unfollowedMerchantService,
   getLikedMerchantService,
   deleteMerchantService,
+  getTop100MerchantsService,
 } from "./merchant.service";
 import { AuthRequest } from "../../middleware/verifyToken";
 import z from "zod";
@@ -180,11 +183,13 @@ export const addMerchantRating = async (
       typeof addMerchantRatingSchema
     >;
 
+    console.log("[addMerchantRating] merchant_id:", merchant_id, "user_id:", user_id, "rate:", rate);
+
     const rating = await addMerchantRatingService(
       merchant_id,
       user_id,
       rate,
-      comment
+      comment || ""
     );
 
     return res.status(201).json({
@@ -193,6 +198,45 @@ export const addMerchantRating = async (
       data: rating,
     });
   } catch (err) {
+    console.error("[addMerchantRating] error:", err);
+    next(err);
+  }
+};
+
+export const getAllRatings = async (
+  req: AuthRequest,
+  res: Response<APIResponse>,
+  next: NextFunction
+) => {
+  try {
+    const limit = req.query.limit ? Number(req.query.limit) : 40;
+    const ratings = await getAllRatingsService(limit);
+    return res.status(200).json({
+      status: "success",
+      message: "All ratings fetched successfully",
+      data: ratings,
+    });
+  } catch (err) {
+    console.error("[getAllRatings] error:", err);
+    next(err);
+  }
+};
+
+export const getUserStats = async (
+  req: AuthRequest,
+  res: Response<APIResponse>,
+  next: NextFunction
+) => {
+  try {
+    const { user_id } = req.user as { user_id: string };
+    const stats = await getUserStatsService(user_id);
+    return res.status(200).json({
+      status: "success",
+      message: "User stats fetched successfully",
+      data: stats,
+    });
+  } catch (err) {
+    console.error("[getUserStats] error:", err);
     next(err);
   }
 };
@@ -335,13 +379,30 @@ export const deleteMerchant = async (
     console.log(`Deleting merchant with id: ${id} for user: ${user_id}`);
 
     await deleteMerchantService(user_id, id);
-
     return res.status(200).json({
       status: "success",
       message: "Merchant deleted successfully",
     });
   } catch (err) {
     console.log(err);
+    next(err);
+  }
+};
+
+export const getTop100Merchants = async (
+  req: AuthRequest,
+  res: Response<APIResponse>,
+  next: NextFunction
+) => {
+  try {
+    const topMerchants = await getTop100MerchantsService();
+    return res.status(200).json({
+      status: "success",
+      message: "Top 100 merchants retrieved successfully",
+      data: topMerchants,
+    });
+  } catch (err) {
+    console.error("[merchant.getTop100] error:", err);
     next(err);
   }
 };

@@ -8,7 +8,9 @@ import type { Merchant } from "@/types";
 const useGetMerchantById = (overrideId?: string) => {
   const params = useParams();
   let merchantId =
-    overrideId ?? (params?.merchantId as string | string[] | undefined);
+    overrideId ??
+    (params?.merchantId as string | string[] | undefined) ??
+    (params?.paymentId as string | string[] | undefined);
   if (Array.isArray(merchantId)) merchantId = merchantId[0];
   const enabled = !!merchantId && typeof merchantId === "string";
 

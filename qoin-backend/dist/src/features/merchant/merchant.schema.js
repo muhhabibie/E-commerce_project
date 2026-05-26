@@ -13,6 +13,9 @@ exports.addMerchantSchema = zod_1.default.object({
     description: zod_1.default.string().min(1).max(500),
     latitude: zod_1.default.string().optional(), // will be parsed to float
     longitude: zod_1.default.string().optional(),
+    google_map_url: zod_1.default.string().url().or(zod_1.default.literal("")).optional(),
+    google_maps_url: zod_1.default.string().url().or(zod_1.default.literal("")).optional(),
+    iframe_map_url: zod_1.default.string().optional(),
 });
 exports.addMerchantRatingSchema = zod_1.default.object({
     rate: zod_1.default
@@ -21,6 +24,7 @@ exports.addMerchantRatingSchema = zod_1.default.object({
         .max(5, "Rating must be at most 5"),
     comment: zod_1.default
         .string()
-        .min(1, "Comment must be at least 1 character long")
-        .max(500, "Comment must be at most 500 characters long"),
+        .max(500, "Comment must be at most 500 characters long")
+        .optional()
+        .default(""),
 });

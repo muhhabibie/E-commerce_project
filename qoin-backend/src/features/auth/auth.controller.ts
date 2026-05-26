@@ -8,6 +8,8 @@ import {
   getUserService,
   loginAccountService,
   getQoinTransactionsService,
+  redeemQoinService,
+  topUpBalanceService,
 } from "./auth.service";
 import setAuthToken from "../../shared/setAuthToken";
 import { AuthRequest } from "../../middleware/verifyToken";
@@ -155,6 +157,64 @@ export const getQoinTransactions = async (
     });
   } catch (err) {
     console.error("[auth.getQoinTransactions] error:", err);
+    next(err);
+  }
+};
+
+export const redeemQoin = async (
+  req: AuthRequest,
+  res: Response<APIResponse>,
+  next: NextFunction
+) => {
+  try {
+    const { user_id } = req.user as { user_id: string };
+    const { amount } = req.body as { amount: number };
+
+    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+      return res.status(400).json({
+        status: "error",
+        message: "Jumlah penukaran tidak valid",
+      });
+    }
+
+    const result = await redeemQoinService(user_id, Number(amount));
+    return res.status(200).json({
+      status: "success",
+      message: `Berhasil menukar ${amount} Qoin`,
+      data: result,
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Gagal menukar Qoin";
+    if (message.includes("tidak mencukupi")) {
+      return res.status(400).json({ status: "error", message });
+    }
+    next(err);
+  }
+};
+
+export const topUpBalance = async (
+  req: AuthRequest,
+  res: Response<APIResponse>,
+  next: NextFunction
+) => {
+  try {
+    const { user_id } = req.user as { user_id: string };
+    const { amount } = req.body as { amount: number };
+
+    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+      return res.status(400).json({
+        status: "error",
+        message: "Jumlah top-up tidak valid",
+      });
+    }
+
+    const result = await topUpBalanceService(user_id, Number(amount));
+    return res.status(200).json({
+      status: "success",
+      message: `Berhasil melakukan top-up sebesar Rp ${Number(amount).toLocaleString("id-ID")}`,
+      data: result,
+    });
+  } catch (err) {
     next(err);
   }
 };

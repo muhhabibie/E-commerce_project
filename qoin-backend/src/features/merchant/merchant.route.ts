@@ -4,6 +4,8 @@ import {
   addMerchant,
   getMerchantById,
   addMerchantRating,
+  getAllRatings,
+  getUserStats,
   getAllMerchant,
   getUserMerchant,
   getDisplayMerchant,
@@ -13,6 +15,7 @@ import {
   unfollowMerchant,
   getLikedMerchant,
   deleteMerchant,
+  getTop100Merchants,
 } from "./merchant.controller";
 import { verifyToken } from "../../middleware/verifyToken";
 import { addMerchantSchema } from "./merchant.schema";
@@ -22,14 +25,21 @@ import { addMerchantRatingSchema } from "./merchant.schema";
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
+// Specific GET routes FIRST (before wildcard /:merchant_id)
 router.get("/all-data", getAllMerchant);
 router.get("/display", getDisplayMerchant);
 router.get("/user", verifyToken, getUserMerchant);
 router.get("/type/:type", getMerchantByType);
-router.get("/:merchant_id", getMerchantById);
+router.get("/top-100", getTop100Merchants);
+router.get("/ratings", getAllRatings); // public: semua ulasan untuk landing page
+router.get("/user-stats", verifyToken, getUserStats); // stats: transaksi, favorit, ulasan
 router.get("/follow-status/:merchant_id", verifyToken, getMerchantFollowStatus);
 router.get("/user/followed-merchant", verifyToken, getLikedMerchant);
 
+// Wildcard GET (must come after all specific GET routes)
+router.get("/:merchant_id", getMerchantById);
+
+// POST routes
 router.post("/:id/follow", verifyToken, followMerchant);
 router.post(
   "/register",
@@ -50,6 +60,7 @@ router.post(
   addMerchantRating
 );
 
+// DELETE routes
 router.delete("/:id/unfollow", verifyToken, unfollowMerchant);
 router.delete("/delete/:id", verifyToken, deleteMerchant);
 

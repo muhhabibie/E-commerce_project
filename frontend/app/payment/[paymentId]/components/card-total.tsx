@@ -9,6 +9,10 @@ import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/format-price";
 import useAddProductToCart from "@/hooks/merchant/use-add-product-to-cart";
 import { Coins } from "lucide-react";
+import useGetUser from "@/hooks/auth/use-get-user";
+import axiosInstance from "@/lib/axios";
+import { toast } from "sonner";
+import { useParams } from "next/navigation";
 
 const SERVICE_FEE_RATE = 0.01; // 1%
 const SHIPPING_COST = 20000; // static per Figma
@@ -17,41 +21,23 @@ const REDEEMABLE_QOIN = 150; // static placeholder
 interface CardTotalProps {
   handlePage?: (page: import("@/hooks/payment/use-payment").OrderStatus) => void;
   isPickup?: boolean;
+  selectedMethod: "bank" | "qris" | "saldo";
 }
 
-const CardTotal = ({ handlePage, isPickup = false }: CardTotalProps) => {
+const CardTotal = ({ handlePage, isPickup = false, selectedMethod }: CardTotalProps) => {
   const { cart, totals } = useAddProductToCart();
   const [redeem, setRedeem] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const { paymentId } = useParams();
+  const { data } = useGetUser();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rawUser = (data as any)?.data ?? (data as any) ?? {};
+  const balance = rawUser?.balance ?? 0;
 
   // Subject: sensor klik tombol bayar
   const payClickRef = useRef<Subject<void>>(new Subject());
   const paySubRef = useRef<Subscription | null>(null);
-
-  useEffect(() => {
-    // Reactive pipeline: exhaustMap memastikan klik kedua DIABAIKAN selama transaksi pertama masih berjalan
-    paySubRef.current = payClickRef.current
-      .pipe(
-        tap(() => setIsProcessing(true)),
-        exhaustMap(() =>
-          // Observable asinkronus: membungkus proses navigasi ke halaman pembayaran
-          from(
-            new Promise<void>((resolve) =>
-              setTimeout(() => {
-                handlePage && handlePage("payment");
-                resolve();
-              }, 300)
-            )
-          )
-        ),
-        tap(() => setIsProcessing(false))
-      )
-      .subscribe();
-
-    return () => {
-      paySubRef.current?.unsubscribe();
-    };
-  }, [handlePage]);
 
   const subtotal = totals.totalPrice ?? 0;
   const serviceFee = Math.round(subtotal * SERVICE_FEE_RATE);
@@ -61,6 +47,74 @@ const CardTotal = ({ handlePage, isPickup = false }: CardTotalProps) => {
     : 0;
   const totalBefore = subtotal + serviceFee + shipping;
   const grandTotal = Math.max(0, totalBefore - discount);
+
+  const isInsufficientBalance = selectedMethod === "saldo" && grandTotal > balance;
+
+  useEffect(() => {
+    // Reactive pipeline: exhaustMap memastikan klik kedua DIABAIKAN selama transaksi pertama masih berjalan
+    paySubRef.current = payClickRef.current
+      .pipe(
+        tap(() => setIsProcessing(true)),
+        exhaustMap(() =>
+          // Observable asinkronus: membungkus proses navigasi ke halaman pembayaran
+          from(
+            (async () => {
+              if (selectedMethod === "saldo") {
+                try {
+                  const itemsPayload = cart.map((item: any) => ({
+                    id: item.id,
+                    quantity: item.quantity,
+                    price: item.price,
+                    merchant_id: paymentId,
+                  }));
+
+                  const paymentUniqueId = `PAY-${Date.now()}`;
+                  localStorage.setItem("qoin.currentPaymentId", paymentUniqueId);
+
+                  // Call backend to deduct balance and record purchase
+                  await axiosInstance.post(`/api/stocks/selled-stock/${paymentUniqueId}`, {
+                    items: itemsPayload,
+                    paymentMethod: "saldo",
+                    amountToDeduct: grandTotal,
+                  });
+
+                  // Update cached user balance so it reflects instantly on UI
+                  const updatedUser = { ...rawUser, balance: rawUser.balance - grandTotal };
+                  localStorage.setItem("user", JSON.stringify({ ...data, data: updatedUser }));
+
+                  toast.success("Pembayaran instan menggunakan Saldo berhasil!");
+
+                  // Transit to tracking page
+                  if (isPickup) {
+                    handlePage && handlePage("delivered");
+                  } else {
+                    handlePage && handlePage("searching");
+                  }
+                } catch (error: any) {
+                  console.error("[saldo.payment] error:", error);
+                  const msg = error?.response?.data?.message || "Gagal memproses transaksi menggunakan Saldo.";
+                  toast.error(msg);
+                }
+              } else {
+                // Normal flow: navigate to payment page (shows QRIS)
+                await new Promise<void>((resolve) =>
+                  setTimeout(() => {
+                    handlePage && handlePage("payment");
+                    resolve();
+                  }, 300)
+                );
+              }
+            })()
+          )
+        ),
+        tap(() => setIsProcessing(false))
+      )
+      .subscribe();
+
+    return () => {
+      paySubRef.current?.unsubscribe();
+    };
+  }, [handlePage, selectedMethod, grandTotal, cart, paymentId, isPickup, rawUser, data]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -175,11 +229,19 @@ const CardTotal = ({ handlePage, isPickup = false }: CardTotalProps) => {
         </div>
 
         <Button
-          className="w-full h-12 rounded-xl text-base"
-          disabled={isProcessing}
+          className={`w-full h-12 rounded-xl text-base font-bold transition-all duration-300 ${
+            isInsufficientBalance
+              ? "bg-destructive/10 hover:bg-destructive/15 text-destructive border border-destructive/20 cursor-not-allowed"
+              : ""
+          }`}
+          disabled={isProcessing || isInsufficientBalance}
           onClick={() => payClickRef.current.next()}
         >
-          {isProcessing ? "Memproses..." : "Bayar Sekarang"}
+          {isProcessing
+            ? "Memproses..."
+            : isInsufficientBalance
+            ? `Saldo Tidak Cukup (Kurang Rp ${formatPrice(grandTotal - balance)})`
+            : "Bayar Sekarang"}
         </Button>
       </CardContent>
     </Card>

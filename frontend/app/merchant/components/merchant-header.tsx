@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import useClickLike from "@/hooks/landing-page/use-click-like";
 import { Merchant } from "@/types";
+import useFollowMerchant from "@/hooks/merchant/use-follow-merchant";
 import { Flag, Heart } from "lucide-react";
 import { useState } from "react";
 import {
@@ -55,6 +56,11 @@ const MerchantHeader = ({ isLoading, merchant }: MerchantHeaderProps) => {
   } = useOpenModal();
   const isAuthenticated = !!user;
 
+  const { isFollowed, handleFollowToggle, isLoading: followLoading } = useFollowMerchant(
+    merchant?.id ?? "",
+    isAuthenticated
+  );
+
   const handleSubmitReport = () => {
     // untuk saat ini hanya tampilkan toast statis
     toast.success("Terima kasih, laporanmu sudah kami terima.");
@@ -67,8 +73,7 @@ const MerchantHeader = ({ isLoading, merchant }: MerchantHeaderProps) => {
       openModal("default");
       return;
     }
-    // Logic untuk follow merchant
-    toast.success("Berhasil mengikuti merchant!");
+    handleFollowToggle();
   };
 
   const heroSrc = merchant?.profilePhotoUrl || "/images/merchant-image.png";
@@ -76,7 +81,12 @@ const MerchantHeader = ({ isLoading, merchant }: MerchantHeaderProps) => {
   const merchantInfo: MerchantInfo[] = [
     { amount: merchant?.stocks?.length ?? 0, text: "Produk" },
     { amount: merchant?.selledStocks?.length ?? 0, text: "Terjual" },
-    { amount: merchant?.total_follower ?? 0, text: "Pengikut" },
+    {
+      amount: merchant?.merchantFollowers
+        ? merchant.merchantFollowers.length
+        : merchant?.total_follower ?? 0,
+      text: "Pengikut",
+    },
   ];
   const { isLiked, toggleLike } = useClickLike();
 
@@ -114,13 +124,21 @@ const MerchantHeader = ({ isLoading, merchant }: MerchantHeaderProps) => {
                         <Skeleton className="w-[120px] h-4 rounded mt-7" />
                       ) : (
                         <>
-                          {Array.from({ length: 5 }).map((_, idx) => (
-                            <span key={idx} className="hidden lg:inline-block">
-                              <RatingStar className="text-yellow-400" />
-                            </span>
-                          ))}
+                          {Array.from({ length: 5 }).map((_, idx) => {
+                            const hasRatings = merchant?.ratings && merchant.ratings.length > 0;
+                            const avgRatingNum = hasRatings
+                              ? Math.round(merchant.ratings.reduce((sum, r) => sum + r.rate, 0) / merchant.ratings.length)
+                              : 0;
+                            return (
+                              <span key={idx} className="hidden lg:inline-block">
+                                <RatingStar className={idx < avgRatingNum ? "text-yellow-400" : "text-gray-300"} />
+                              </span>
+                            );
+                          })}
                           <h1 className="text-[#333] lg:text-[22px] md:text-lg text-base font-semibold">
-                            4.9
+                            {merchant?.ratings && merchant.ratings.length > 0
+                              ? (merchant.ratings.reduce((sum, r) => sum + r.rate, 0) / merchant.ratings.length).toFixed(1)
+                              : "0.0"}
                           </h1>
                         </>
                       )}
@@ -156,12 +174,16 @@ const MerchantHeader = ({ isLoading, merchant }: MerchantHeaderProps) => {
                 ) : (
                   <div className="bg-primary rounded-lg border shadow-md lg:hidden">
                     <div className="flex items-center justify-center gap-2 font-bold text-white px-3 py-1 shrink-0">
-                      <p className="text-sm lg:text-base">4,8</p>
+                      <p className="text-sm lg:text-base">
+                        {merchant?.ratings && merchant.ratings.length > 0
+                          ? (merchant.ratings.reduce((sum, r) => sum + r.rate, 0) / merchant.ratings.length).toFixed(1)
+                          : "0.0"}
+                      </p>
                       <RatingStar className="text-yellow-400" />
                     </div>
                     <div className="bg-white gap-1 flex items-center p-1">
                       <FluentChat className="size-3 text-[#808080] " />
-                      <p className="text-xs">128 ulasan</p>
+                      <p className="text-xs">{merchant?.ratings?.length ?? 0} ulasan</p>
                     </div>
                   </div>
                 )}
@@ -190,9 +212,15 @@ const MerchantHeader = ({ isLoading, merchant }: MerchantHeaderProps) => {
                   <div className="flex flex-wrap gap-3">
                     <Button
                       onClick={handleFollowClick}
-                      className="bg-[linear-gradient(81deg,#FD6700_-18.45%,#FF944B_29.81%)] lg:text-lg text-sm md:text-base px-5 py-2.5 md:px-6 md:py-3"
+                      disabled={followLoading}
+                      variant={isFollowed ? "outline" : "default"}
+                      className={
+                        isFollowed
+                          ? "border-primary text-primary hover:bg-primary/5 lg:text-lg text-sm md:text-base px-5 py-2.5 md:px-6 md:py-3 rounded-xl transition-all duration-200"
+                          : "bg-[linear-gradient(81deg,#FD6700_-18.45%,#FF944B_29.81%)] text-white lg:text-lg text-sm md:text-base px-5 py-2.5 md:px-6 md:py-3 rounded-xl transition-all duration-200"
+                      }
                     >
-                      Ikuti
+                      {isFollowed ? "Mengikuti" : "Ikuti"}
                     </Button>
                     <Link
                       href={(merchant?.google_map_url as string) ?? ""}

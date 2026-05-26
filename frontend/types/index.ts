@@ -9,6 +9,7 @@ export interface Stock {
   description: string;
   created_at: string; // ISO string (Date.toISOString())
   updated_at: string;
+  stockRating?: { id: string; stock_id: string; rate: number; created_at: string; updated_at: string }[];
 }
 
 export interface Merchant {
@@ -61,7 +62,7 @@ export interface DisplayMerchantType {
   longitude?: number | null;
   ratings?: { rate: number }[];
   type?: string;
-  stocks?: { price: number }[];
+  stocks?: any[];
 }
 
 export interface DisplayMerchantResponse {

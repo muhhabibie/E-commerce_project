@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { formatPrice } from "@/lib/format-price";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
+import RatingModal from "./rating-modal";
 
 interface PickupConfirmationProps {
   merchantName: string;
@@ -21,6 +22,7 @@ const PickupConfirmation = ({
   const [pickupCode, setPickupCode] = useState("");
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [copied, setCopied] = useState(false);
+  const [showRatingModal, setShowRatingModal] = useState(false);
 
   const router = useRouter();
   const { paymentId } = useParams();
@@ -175,21 +177,40 @@ const PickupConfirmation = ({
       </Card>
 
       {/* Action Buttons */}
-      <div className="flex gap-3">
+      <div className="flex flex-col gap-3">
         <Button
-          variant="outline"
-          className="flex-1 h-12"
-          onClick={() => (window.location.href = "/")}
+          className="flex-1 h-12 bg-[#EE4D2D] hover:bg-[#d43d22] text-white"
+          onClick={() => setShowRatingModal(true)}
         >
-          Kembali ke Beranda
+          Beri Rating & Ulasan
         </Button>
-        <Button
-          className="flex-1 h-12"
-          onClick={() => router.push(`/merchant/${paymentId}`)}
-        >
-          Pesan Lagi
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            className="flex-1 h-12"
+            onClick={() => (window.location.href = "/")}
+          >
+            Kembali ke Beranda
+          </Button>
+          <Button
+            className="flex-1 h-12"
+            onClick={() => router.push(`/merchant/${paymentId}`)}
+          >
+            Pesan Lagi
+          </Button>
+        </div>
       </div>
+
+      {/* Rating Modal — overlay di halaman yang sama */}
+      {showRatingModal && paymentId && (
+        <RatingModal
+          merchantId={paymentId as string}
+          onClose={() => {
+            setShowRatingModal(false);
+            router.push("/");
+          }}
+        />
+      )}
     </div>
   );
 };

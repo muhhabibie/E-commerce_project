@@ -20,6 +20,7 @@ export const addMerchantRatingSchema = z.object({
     .max(5, "Rating must be at most 5"),
   comment: z
     .string()
-    .min(1, "Comment must be at least 1 character long")
-    .max(500, "Comment must be at most 500 characters long"),
+    .max(500, "Comment must be at most 500 characters long")
+    .optional()
+    .default(""),
 });

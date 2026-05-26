@@ -87,12 +87,16 @@ interface SelledStockServiceParams {
   paymentId: string;
   userId: string;
   items: SelledStockItem[];
+  paymentMethod?: string;
+  amountToDeduct?: number;
 }
 
 export const selledStockService = async ({
   paymentId,
   userId,
   items,
+  paymentMethod,
+  amountToDeduct,
 }: SelledStockServiceParams) => {
   if (!Array.isArray(items) || items.length === 0) {
     return {
@@ -110,6 +114,36 @@ export const selledStockService = async ({
   }));
 
   const result = await prisma.$transaction(async (tx: any) => {
+    // Jika metode pembayaran menggunakan Saldo, lakukan pengecekan dan pengurangan saldo
+    if (paymentMethod === "saldo" && amountToDeduct !== undefined) {
+      if (amountToDeduct < 0) {
+        throw new Error("Nominal pembayaran tidak valid");
+      }
+
+      const user = await tx.users.findUnique({
+        where: { id: userId },
+        select: { balance: true },
+      });
+
+      if (!user) {
+        throw new Error("User tidak ditemukan");
+      }
+
+      if (user.balance < amountToDeduct) {
+        throw new Error(`Saldo tidak mencukupi. Saldo Anda: Rp ${user.balance.toLocaleString("id-ID")}, Total Bayar: Rp ${amountToDeduct.toLocaleString("id-ID")}`);
+      }
+
+      // Potong saldo user
+      await tx.users.update({
+        where: { id: userId },
+        data: {
+          balance: {
+            decrement: amountToDeduct,
+          },
+        },
+      });
+    }
+
     // 1. Catat data stok yang terjual
     const created = await tx.selled_stocks.createMany({
       data: payload,
@@ -181,3 +215,33 @@ export const getUserTransactionsService = async (userId: string) => {
 
   return transactions;
 };
+
+export const updateOrderStatusService = async (paymentId: string, status: any) => {
+  const updated = await prisma.selled_stocks.updateMany({
+    where: {
+      payment_id: paymentId,
+    },
+    data: {
+      status,
+    },
+  });
+  return updated;
+};
+
+export const getSelledStocksByPaymentIdService = async (paymentId: string) => {
+  const transactions = await prisma.selled_stocks.findMany({
+    where: {
+      payment_id: paymentId,
+    },
+    include: {
+      merchant: {
+        select: {
+          name: true,
+          id: true,
+        },
+      },
+    },
+  });
+  return transactions;
+};
+
