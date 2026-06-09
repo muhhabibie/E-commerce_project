@@ -58,7 +58,7 @@ export const CardTrolleyItem = ({
         </div>
         <div className="flex items-center justify-between mt-2 md:mt-3 gap-3">
           <p className="text-primary text-base md:text-lg lg:text-xl font-bold flex-shrink-0">
-            {formatPrice(price)}
+            {formatPrice(price * quantity)}
           </p>
           <div className="flex items-center gap-2 md:gap-2.5">
             <Button

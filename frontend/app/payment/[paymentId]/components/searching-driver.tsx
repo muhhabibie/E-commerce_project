@@ -47,7 +47,7 @@ const SearchingDriver = ({
     }
   }, [userData]);
 
-  const currentAddress = address || primaryAddress?.address || guestAddress?.address || "Universitas Telkom Jakarta - Kampus Minangkabau, Jl. Minangkabau Barat No.50, RT.1/RW.1, Pasar Manggis, Setiabudi, South Jakarta City, Jakarta 12970";
+  const currentAddress = address || primaryAddress?.address || guestAddress?.address || "Universitas Brawijaya Malang";
   const currentRecipient = recipient || primaryAddress?.recipient || guestAddress?.recipient || userEmailName;
   const currentPhone = phone || primaryAddress?.phone || guestAddress?.phone || "+62-85156473876";
   const [isDriverFound, setIsDriverFound] = useState(false);

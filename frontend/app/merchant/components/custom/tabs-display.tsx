@@ -76,7 +76,7 @@ const TabsDisplay = ({
         </div>
       </Tabs>
       <div className="flex flex-col gap-3 md:gap-4 col-span-1 lg:col-span-1 mt-4 md:mt-6 lg:mt-0">
-        <AsideCard className="w-full" location={merchant?.location} merchantId={merchant?.id ?? ""} />
+        <AsideCard className="w-full" location={merchant?.location} merchantId={merchant?.id ?? ""} merchantUserId={merchant?.user_id} />
         <CartCard
           className="w-full"
           cart={cart}

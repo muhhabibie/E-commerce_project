@@ -130,7 +130,7 @@ const DriverPage = ({ merchantName, merchantId, orderStatus }: DriverPageProps) 
     ? `${primaryAddress.address} (${primaryAddress.recipient} - ${primaryAddress.phone})`
     : guestAddress
     ? `${guestAddress.address} (${guestAddress.recipient} - ${guestAddress.phone})`
-    : `Universitas Telkom Jakarta - Kampus Minangkabau, Jl. Minangkabau Barat No.50, RT.1/RW.1, Pasar Manggis, Setiabudi, South Jakarta City, Jakarta 12970 (${userEmailName} - +62-85156473876)`;
+    : `Universitas Brawijaya Malang (${userEmailName} - +62-85156473876)`;
 
   const [shippingAddress, setShippingAddress] = useState<string>(defaultShippingAddress);
   const [orderId, setOrderId] = useState<string>("ORD-1726990776370");
@@ -318,7 +318,7 @@ const DriverPage = ({ merchantName, merchantId, orderStatus }: DriverPageProps) 
               onClick={() => {
                 if (merchantId) {
                   if (window.innerWidth >= 768) {
-                    openChat(merchantId);
+                    openChat(merchant?.user_id || merchantId);
                   } else {
                     router.push(`/chat/${merchantId}`);
                   }

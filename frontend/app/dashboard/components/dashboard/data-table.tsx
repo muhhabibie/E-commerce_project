@@ -30,6 +30,8 @@ interface BaseProps<T extends object> {
   data: T[] | null | undefined;
   emptyMessage?: string;
   isLoading?: boolean;
+  onEdit?: (row: T) => void;
+  onDelete?: (row: T) => void;
 }
 
 export function DataTable<T extends object>({
@@ -38,6 +40,8 @@ export function DataTable<T extends object>({
   data,
   emptyMessage = "No data",
   isLoading = false,
+  onEdit,
+  onDelete,
 }: BaseProps<T>) {
   return (
     <Card>
@@ -101,8 +105,17 @@ export function DataTable<T extends object>({
                           <MoreHorizontal />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
-                          <DropdownMenuItem>Delete</DropdownMenuItem>
-                          <DropdownMenuItem>Edit</DropdownMenuItem>
+                          {onEdit && (
+                            <DropdownMenuItem onClick={() => onEdit(row)}>Edit</DropdownMenuItem>
+                          )}
+                          {onDelete && (
+                            <DropdownMenuItem 
+                              onClick={() => onDelete(row)} 
+                              className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

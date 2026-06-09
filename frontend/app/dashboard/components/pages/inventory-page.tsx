@@ -14,8 +14,15 @@ interface InventoryPageProps {
 }
 
 export function InventoryPage({ merchant }: InventoryPageProps) {
-  const { formik, handleCloseModal, handleOpenModal, openModal } =
-    useAddProduct();
+  const { 
+    formik, 
+    handleCloseModal, 
+    handleOpenModal, 
+    openModal,
+    editingProduct,
+    handleEditProduct,
+    handleDeleteProduct
+  } = useAddProduct();
 
   const merchantStocks = Array.isArray(merchant?.stocks)
     ? merchant?.stocks
@@ -51,12 +58,15 @@ export function InventoryPage({ merchant }: InventoryPageProps) {
           { key: "price", label: "Price" },
         ]}
         data={merchantStocks}
+        onEdit={handleEditProduct}
+        onDelete={handleDeleteProduct}
       />
 
       <ProductFormModal
         isOpen={openModal}
         onClose={handleCloseModal}
         formik={formik}
+        isEditing={!!editingProduct}
       />
     </div>
   );

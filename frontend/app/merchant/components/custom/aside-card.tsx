@@ -24,10 +24,12 @@ const AsideCard = ({
   className,
   location,
   merchantId,
+  merchantUserId,
 }: {
   className?: string;
   location?: string;
   merchantId: string;
+  merchantUserId?: string;
 }) => {
   const router = useRouter();
   const { data: user } = useGetUser();
@@ -50,7 +52,7 @@ const AsideCard = ({
     
     // Check if on desktop (width >= 768px)
     if (window.innerWidth >= 768) {
-      openChat(merchantId);
+      openChat(merchantUserId || merchantId);
     } else {
       router.push(`/chat/${merchantId}`);
     }

@@ -206,6 +206,7 @@ export const getMerchantDisplayService = async () => {
           photo_url: true,
           quantity: true,
           description: true,
+          stockRating: true,
         },
       },
       ratings: {

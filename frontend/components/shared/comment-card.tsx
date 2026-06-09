@@ -15,7 +15,9 @@ interface CommentCardProps {
 
 const formatRelativeDate = (dateStr?: string) => {
   if (!dateStr) return "Baru saja";
-  const diff = Date.now() - new Date(dateStr).getTime();
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return "Baru saja";
+  const diff = Date.now() - date.getTime();
   const mins = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
@@ -23,7 +25,7 @@ const formatRelativeDate = (dateStr?: string) => {
   if (mins < 60) return `${mins} menit lalu`;
   if (hours < 24) return `${hours} jam lalu`;
   if (days < 30) return `${days} hari lalu`;
-  return new Date(dateStr).toLocaleDateString("id-ID", {
+  return date.toLocaleDateString("id-ID", {
     day: "numeric",
     month: "short",
     year: "numeric",

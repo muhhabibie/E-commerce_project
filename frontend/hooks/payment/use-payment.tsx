@@ -88,8 +88,12 @@ const usePayment = ({ isPickup = false }: UsePaymentProps = {}) => {
       }
     };
 
-    eventSource.onerror = (err) => {
-      console.error("SSE connection error:", err);
+    eventSource.onerror = () => {
+      // SSE auto-reconnects on disconnect — this is normal browser behaviour.
+      // Close the connection if there's no active paymentId to avoid infinite retries.
+      if (!paymentId) {
+        eventSource.close();
+      }
     };
 
     return () => {

@@ -36,6 +36,36 @@ const GlobalChatWidget = () => {
   const [inboxLoading, setInboxLoading] = useState(false);
   const [inputMessage, setInputMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [partnerInfo, setPartnerInfo] = useState<{ name: string; avatar: string | null } | null>(null);
+
+  // Fetch partner info when activePartnerId changes
+  useEffect(() => {
+    if (!activePartnerId) {
+      setPartnerInfo(null);
+      return;
+    }
+    const found = conversations.find(c => c.partnerId === activePartnerId);
+    if (found) {
+      setPartnerInfo({
+        name: found.partnerName,
+        avatar: found.partnerAvatar,
+      });
+    } else {
+      axiosInstance
+        .get(`/api/chat/sender-info/${activePartnerId}`)
+        .then((res) => {
+          if (res.data?.data) {
+            setPartnerInfo({
+              name: res.data.data.name,
+              avatar: res.data.data.avatar,
+            });
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to fetch partner info", err);
+        });
+    }
+  }, [activePartnerId, conversations]);
 
   // Fetch Inbox
   const fetchConversations = useCallback(async () => {
@@ -150,10 +180,10 @@ const GlobalChatWidget = () => {
                     >
                       <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 relative">
                         {conv.partnerAvatar ? (
-                          <Image src={conv.partnerAvatar} alt={conv.partnerName} fill className="object-cover" sizes="40px" />
+                          <Image src={conv.partnerAvatar} alt={conv.partnerName ?? "Partner"} fill className="object-cover" sizes="40px" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-500 font-bold text-xs">
-                            {conv.partnerName[0]?.toUpperCase() ?? "U"}
+                            {(conv.partnerName ?? "U")[0]?.toUpperCase() ?? "U"}
                           </div>
                         )}
                       </div>
@@ -181,7 +211,7 @@ const GlobalChatWidget = () => {
               <>
                 {/* Chat Header */}
                 <div className="p-3 border-b border-border flex items-center gap-3 bg-muted/10 h-[53px]">
-                   <span className="font-semibold text-sm truncate">{selectedPartner?.partnerName ?? "Memuat..."}</span>
+                   <span className="font-semibold text-sm truncate">{partnerInfo?.name ?? selectedPartner?.partnerName ?? "Memuat..."}</span>
                    <span className="text-xs flex items-center gap-1 ml-auto text-muted-foreground">
                     {isConnected ? <><span className="w-1.5 h-1.5 rounded-full bg-green-500" /> Terhubung</> : <><span className="w-1.5 h-1.5 rounded-full bg-gray-400" /> ...</>}
                    </span>

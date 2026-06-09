@@ -39,7 +39,7 @@ const CartItem = ({
         <h1 className="font-semibold text-sm line-clamp-1">{name}</h1>
         <div className="flex items-center justify-between mt-1">
           <p className="text-primary font-semibold text-sm">
-            Rp. {formatPrice(price)}
+            Rp. {formatPrice(price * quantity)}
           </p>
           <div className="flex items-center gap-2">
             <Button

@@ -29,6 +29,9 @@ export const getStocksByMerchantIdService = async (merchant_id: string) => {
     where: {
       merchant_id,
     },
+    include: {
+      stockRating: true,
+    },
   });
 
   return stocks;
@@ -243,5 +246,15 @@ export const getSelledStocksByPaymentIdService = async (paymentId: string) => {
     },
   });
   return transactions;
+};
+
+export const addStockRatingService = async (stock_id: string, rate: number) => {
+  const rating = await prisma.stock_rating.create({
+    data: {
+      stock_id,
+      rate: Number(rate),
+    },
+  });
+  return rating;
 };
 

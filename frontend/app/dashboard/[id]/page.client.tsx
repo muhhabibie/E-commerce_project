@@ -33,7 +33,7 @@ export default function DashboardClient({
   } else if (activePage === "sales") {
     content = <SalesPage merchant={merchant} />;
   } else if (activePage === "analytics") {
-    content = <AnalyticsPage />;
+    content = <AnalyticsPage merchant={merchant} />;
   } else if (activePage === "chat") {
     content = <ChatPage merchantUserId={merchant?.user_id ?? ""} />;
   }

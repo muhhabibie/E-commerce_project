@@ -28,6 +28,7 @@ import useLogout from "@/hooks/auth/use-logout";
 import useMessageNotification from "@/hooks/chat/use-message-notification";
 import { useEffect, useState } from "react";
 import QoinInfoModal from "../shared/qoin-info-modal";
+import DialogLogoutConfirm from "../shared/dialog-logout-confirm";
 
 interface HeaderProps {
   openModal?: (open: string) => void;
@@ -37,6 +38,7 @@ const Header = ({ openModal }: HeaderProps) => {
   const router = useRouter();
   const { data, isError, isLoading: isUserLoading } = useGetUser();
   const { handleLogout, isPending } = useLogout();
+  const [isLogoutOpen, setIsLogoutOpen] = useState(false);
 
   interface UserPayload {
     qoin?: number;
@@ -202,7 +204,7 @@ const Header = ({ openModal }: HeaderProps) => {
                       Profil
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={handleLogout}
+                      onClick={() => setIsLogoutOpen(true)}
                       disabled={isPending}
                     >
                       Keluar
@@ -377,7 +379,7 @@ const Header = ({ openModal }: HeaderProps) => {
                             <DropdownMenuItem
                               onClick={() => {
                                 setIsSheetOpen(false);
-                                handleLogout();
+                                setIsLogoutOpen(true);
                               }}
                               disabled={isPending}
                             >
@@ -411,6 +413,12 @@ const Header = ({ openModal }: HeaderProps) => {
           </div>
         </div>
       </PageContainer>
+      <DialogLogoutConfirm
+        open={isLogoutOpen}
+        onClose={() => setIsLogoutOpen(false)}
+        onConfirm={handleLogout}
+        isPending={isPending}
+      />
     </Section>
   );
 };

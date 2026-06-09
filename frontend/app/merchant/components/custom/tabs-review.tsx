@@ -3,8 +3,7 @@ import CommentCard from "@/components/shared/comment-card";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { TabsContent } from "@/components/ui/tabs";
-import { formatDistanceToNow } from "date-fns";
-import { id } from "date-fns/locale";
+
 
 type ReviewContent = {
   percentage: number;
@@ -92,7 +91,7 @@ const TabsReview = ({ ratings = [] }: TabsReviewProps) => {
                 userEmail={rating.user?.email}
                 rate={rating.rate}
                 comment={rating.comment}
-                date={formatDistanceToNow(new Date(rating.created_at), { addSuffix: true, locale: id })}
+                date={rating.created_at}
               />
             ))
           ) : (

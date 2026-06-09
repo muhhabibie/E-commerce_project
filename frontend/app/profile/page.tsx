@@ -32,12 +32,14 @@ import axiosInstance from "@/lib/axios";
 import { toast } from "sonner";
 import { Plus, Wallet, CheckCircle2, X } from "lucide-react";
 import { formatPrice } from "@/lib/format-price";
+import DialogLogoutConfirm from "@/components/shared/dialog-logout-confirm";
 
 const ProfilePage = () => {
   const router = useRouter();
   const { openModal } = useOpenModal();
   const { data, isLoading, isError } = useGetUser();
   const { handleLogout, isPending } = useLogout();
+  const [isLogoutOpen, setIsLogoutOpen] = useState(false);
   const { stats, isLoading: statsLoading } = useGetUserStats();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -415,13 +417,13 @@ const ProfilePage = () => {
                       </Button>
                       <Button
                         variant="outline"
-                        onClick={handleLogout}
+                        onClick={() => setIsLogoutOpen(true)}
                         disabled={isPending}
                         className="w-full justify-start rounded-2xl border-red-200 hover:border-red-500 hover:bg-red-50 text-red-600 hover:text-red-700"
                       >
                         <LogOut className="w-5 h-5 mr-3" />
                         <span className="text-sm md:text-base">
-                          {isPending ? "Keluar..." : "Keluar dari Akun"}
+                          Keluar dari Akun
                         </span>
                       </Button>
                     </div>
@@ -438,6 +440,12 @@ const ProfilePage = () => {
           onSuccess={(newBalance) => setSaldo(newBalance)}
         />
       )}
+      <DialogLogoutConfirm
+        open={isLogoutOpen}
+        onClose={() => setIsLogoutOpen(false)}
+        onConfirm={handleLogout}
+        isPending={isPending}
+      />
     </>
   );
 };

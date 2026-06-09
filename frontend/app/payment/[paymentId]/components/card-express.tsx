@@ -42,7 +42,7 @@ const CardExpress = () => {
   const DEFAULT_ADDRESS = {
     recipient: userEmailName,
     phone: "+62-85156473876",
-    address: "Universitas Telkom Jakarta - Kampus Minangkabau, Jl. Minangkabau Barat No.50, RT.1/RW.1, Pasar Manggis, Setiabudi, South Jakarta City, Jakarta 12970",
+    address: "Universitas Brawijaya Malang",
   };
 
   const [guestAddress, setGuestAddress] = useState<{recipient: string, phone: string, address: string} | null>(null);

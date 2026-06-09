@@ -16,14 +16,15 @@ import { ImageUploadField } from "@/app/merchant/components/onboarding/image-upl
 interface ProductFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-
   formik: FormikProps<AddProductsForm>;
+  isEditing?: boolean;
 }
 
 export function ProductFormModal({
   isOpen,
   onClose,
   formik,
+  isEditing = false,
 }: ProductFormModalProps) {
   return (
     <Dialog
@@ -34,7 +35,7 @@ export function ProductFormModal({
     >
       <DialogContent className="w-full max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add Product</DialogTitle>
+          <DialogTitle>{isEditing ? "Edit Product" : "Add Product"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={formik.handleSubmit} className="space-y-4">
           <div>

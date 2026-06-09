@@ -10,6 +10,7 @@ import {
   getUserTransactionsService,
   updateOrderStatusService,
   getSelledStocksByPaymentIdService,
+  addStockRatingService,
 } from "./stocks.service";
 import { AuthRequest } from "../../middleware/verifyToken";
 import z from "zod";
@@ -370,6 +371,42 @@ export const updateOrderStatus = async (
     return res.status(200).json({
       status: "success",
       message: `Successfully updated order status to ${status}`,
+    });
+  } catch (err) {
+    console.error(err);
+    next(err);
+  }
+};
+
+export const addStockRating = async (
+  req: AuthRequest,
+  res: Response<APIResponse>,
+  next: NextFunction
+) => {
+  try {
+    const { stock_id } = req.params;
+    const { rate } = req.body;
+
+    if (!stock_id) {
+      return res.status(400).json({
+        status: "error",
+        message: "stock_id is required",
+      });
+    }
+
+    if (rate === undefined || rate === null) {
+      return res.status(400).json({
+        status: "error",
+        message: "rate is required",
+      });
+    }
+
+    const rating = await addStockRatingService(stock_id, rate);
+
+    return res.status(201).json({
+      status: "success",
+      message: "Product rating added successfully",
+      data: rating,
     });
   } catch (err) {
     console.error(err);
