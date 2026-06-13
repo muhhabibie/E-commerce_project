@@ -21,7 +21,8 @@ export function InventoryPage({ merchant }: InventoryPageProps) {
     openModal,
     editingProduct,
     handleEditProduct,
-    handleDeleteProduct
+    handleDeleteProduct,
+    isPending
   } = useAddProduct();
 
   const merchantStocks = Array.isArray(merchant?.stocks)
@@ -67,6 +68,7 @@ export function InventoryPage({ merchant }: InventoryPageProps) {
         onClose={handleCloseModal}
         formik={formik}
         isEditing={!!editingProduct}
+        isPending={isPending}
       />
     </div>
   );

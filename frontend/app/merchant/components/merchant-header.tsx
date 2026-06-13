@@ -355,15 +355,6 @@ const MerchantHeader = ({ isLoading, merchant }: MerchantHeaderProps) => {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Dialog Login */}
-      <DialogLogin
-        open={defaultModalIsOpen}
-        onClose={closeModal}
-        openModal={openModal}
-      />
-      <DialogSignup open={signUpIsOpen} onClose={onCloseSignup} />
-      <DialogLoginEmail open={signInIsOpen} onClose={closeModal} />
     </Section>
   );
 };

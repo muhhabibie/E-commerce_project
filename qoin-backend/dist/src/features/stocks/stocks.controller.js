@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateOrderStatus = exports.orderStream = exports.broadcastOrderUpdate = exports.getUserTransactions = exports.selledStock = exports.deleteManyStocks = exports.deleteStocks = exports.changeDisplayStocks = exports.updateStocks = exports.getStocksByMerchantId = exports.addStocks = void 0;
+exports.addStockRating = exports.updateOrderStatus = exports.orderStream = exports.broadcastOrderUpdate = exports.getUserTransactions = exports.selledStock = exports.deleteManyStocks = exports.deleteStocks = exports.changeDisplayStocks = exports.updateStocks = exports.getStocksByMerchantId = exports.addStocks = void 0;
 const stocks_service_1 = require("./stocks.service");
 const uploadToSupabase_1 = require("../../shared/uploadToSupabase");
 const addStocks = async (req, res, next) => {
@@ -274,3 +274,32 @@ const updateOrderStatus = async (req, res, next) => {
     }
 };
 exports.updateOrderStatus = updateOrderStatus;
+const addStockRating = async (req, res, next) => {
+    try {
+        const { stock_id } = req.params;
+        const { rate } = req.body;
+        if (!stock_id) {
+            return res.status(400).json({
+                status: "error",
+                message: "stock_id is required",
+            });
+        }
+        if (rate === undefined || rate === null) {
+            return res.status(400).json({
+                status: "error",
+                message: "rate is required",
+            });
+        }
+        const rating = await (0, stocks_service_1.addStockRatingService)(stock_id, rate);
+        return res.status(201).json({
+            status: "success",
+            message: "Product rating added successfully",
+            data: rating,
+        });
+    }
+    catch (err) {
+        console.error(err);
+        next(err);
+    }
+};
+exports.addStockRating = addStockRating;

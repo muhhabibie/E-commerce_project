@@ -73,7 +73,7 @@ const DialogLoginEmail = ({ open, onClose }: DialogLoginEmailProps) => {
           </div>
 
           <Button type="submit" disabled={isSubmitting} className="w-full">
-            Masuk
+            {isSubmitting ? "Memproses..." : "Masuk"}
           </Button>
         </form>
 

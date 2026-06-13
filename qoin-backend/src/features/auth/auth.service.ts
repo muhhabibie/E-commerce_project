@@ -169,4 +169,14 @@ export const topUpBalanceService = async (userId: string, amount: number) => {
 
   return updatedUser;
 };
+export const updateProfileService = async (
+  userId: string,
+  data: { name?: string; phone?: string; address?: string; profile_photo?: string }
+) => {
+  const updatedUser = await prisma.users.update({
+    where: { id: userId },
+    data,
+  });
 
+  return updatedUser;
+};

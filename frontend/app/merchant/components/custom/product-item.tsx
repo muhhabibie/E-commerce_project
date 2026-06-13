@@ -73,13 +73,19 @@ const ProductItem = ({
       </div>
 
       <div className="relative size-[155] rounded-lg">
-        <Image
-          src={photo_url}
-          width={400}
-          height={400}
-          className="w-full h-full rounded-lg object-cover"
-          alt={`Foto Produk ${name}`}
-        />
+        {photo_url ? (
+          <Image
+            src={photo_url}
+            width={400}
+            height={400}
+            className="w-full h-full rounded-lg object-cover"
+            alt={`Foto Produk ${name}`}
+          />
+        ) : (
+          <div className="w-full h-full rounded-lg bg-slate-100 flex items-center justify-center border border-slate-200">
+            <span className="text-slate-400 text-xs font-medium">No Image</span>
+          </div>
+        )}
         <Button
           onClick={() => handleProduct(id)}
           disabled={isOutOfStock}

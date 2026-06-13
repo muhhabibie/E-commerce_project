@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.topUpBalanceService = exports.redeemQoinService = exports.getQoinTransactionsService = exports.getUserPointsService = exports.getUserService = exports.loginAccountService = exports.createAccountService = void 0;
+exports.updateProfileService = exports.topUpBalanceService = exports.redeemQoinService = exports.getQoinTransactionsService = exports.getUserPointsService = exports.getUserService = exports.loginAccountService = exports.createAccountService = void 0;
 const prisma_1 = __importDefault(require("../../database/prisma"));
 const checkUser_1 = __importDefault(require("../../shared/checkUser"));
 const comparePassword_1 = __importDefault(require("../../shared/comparePassword"));
@@ -154,3 +154,11 @@ const topUpBalanceService = async (userId, amount) => {
     return updatedUser;
 };
 exports.topUpBalanceService = topUpBalanceService;
+const updateProfileService = async (userId, data) => {
+    const updatedUser = await prisma_1.default.users.update({
+        where: { id: userId },
+        data,
+    });
+    return updatedUser;
+};
+exports.updateProfileService = updateProfileService;

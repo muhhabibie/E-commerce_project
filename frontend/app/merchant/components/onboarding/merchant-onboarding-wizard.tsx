@@ -10,7 +10,7 @@ import { OnboardingFooterActions } from "./footer-actions";
 import useRegisterMerchant from "@/hooks/merchant/use-register-merchant";
 
 export function MerchantOnboardingWizard() {
-  const { formik, fetchCurrentCoordinates, locating, locationError } =
+  const { formik, fetchCurrentCoordinates, locating, locationError, isPending } =
     useRegisterMerchant();
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -63,6 +63,7 @@ export function MerchantOnboardingWizard() {
         onSubmit={handleSubmit}
         isFirstStep={currentStep === 1}
         isLastStep={currentStep === 4}
+        isPending={isPending}
       />
     </OnboardingLayout>
   );

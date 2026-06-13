@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import QueryProvider from "@/components/shared/QueryProvider";
 import GlobalChatWidget from "@/components/shared/global-chat-widget";
+import GlobalAuthModals from "@/components/shared/global-auth-modals";
 
 const urbanist = Urbanist({
   variable: "--font-urbanist",
@@ -29,6 +30,7 @@ export default function RootLayout({
           <Toaster position="bottom-right" richColors />
           {children}
           <GlobalChatWidget />
+          <GlobalAuthModals />
         </QueryProvider>
       </body>
     </html>

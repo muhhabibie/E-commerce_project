@@ -240,9 +240,11 @@ const QoinPage = () => {
   }, []);
 
   useEffect(() => {
-    const bal = rawUser?.total_point ?? rawUser?.qoin ?? 0;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const raw = (data as any)?.data ?? (data as any) ?? {};
+    const bal = raw?.total_point ?? raw?.qoin ?? 0;
     setQoinBalance(bal);
-  }, [rawUser]);
+  }, [data]);
 
   useEffect(() => {
     if (isAuthenticated) fetchTransactions();

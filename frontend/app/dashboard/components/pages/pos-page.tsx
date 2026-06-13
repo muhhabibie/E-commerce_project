@@ -8,27 +8,29 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus } from "lucide-react";
 
-const mockProducts = [
-  { id: "1", name: "Laptop", price: 15000000, category: "Electronics" },
-  { id: "2", name: "Mouse", price: 500000, category: "Electronics" },
-  { id: "3", name: "Keyboard", price: 1500000, category: "Electronics" },
-  { id: "4", name: "Monitor", price: 3000000, category: "Electronics" },
-  { id: "5", name: "Headphones", price: 2000000, category: "Electronics" },
-  { id: "6", name: "USB Cable", price: 100000, category: "Electronics" },
-];
+import { toast } from "sonner";
+import { Merchant } from "@/types";
 
-export function POSPage() {
+interface POSPageProps {
+  merchant?: Merchant | null;
+}
+
+export function POSPage({ merchant }: POSPageProps) {
   const [cart, setCart] = useState<
     Array<{ id: string; name: string; price: number; quantity: number }>
   >([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showCart, setShowCart] = useState(false);
 
-  const filteredProducts = mockProducts.filter((p) =>
+  const merchantStocks = Array.isArray(merchant?.stocks)
+    ? merchant.stocks
+    : [];
+
+  const filteredProducts = merchantStocks.filter((p) =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const addToCart = (product: (typeof mockProducts)[0]) => {
+  const addToCart = (product: typeof merchantStocks[0]) => {
     const existingItem = cart.find((item) => item.id === product.id);
     if (existingItem) {
       setCart(
@@ -61,7 +63,7 @@ export function POSPage() {
   const total = subtotal + tax;
 
   const handleCheckout = () => {
-    alert(`Order completed! Total: Rp ${total.toLocaleString()}`);
+    toast.success(`Transaksi berhasil! Total: Rp ${total.toLocaleString()}`);
     setCart([]);
     setShowCart(false);
   };
@@ -97,8 +99,8 @@ export function POSPage() {
                       <p className="font-semibold text-foreground truncate">
                         {product.name}
                       </p>
-                      <p className="text-sm text-muted-foreground">
-                        {product.category}
+                      <p className="text-sm text-muted-foreground line-clamp-1">
+                        {product.description || "Tanpa deskripsi"}
                       </p>
                     </div>
                   </div>

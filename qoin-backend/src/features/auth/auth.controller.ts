@@ -10,6 +10,7 @@ import {
   getQoinTransactionsService,
   redeemQoinService,
   topUpBalanceService,
+  updateProfileService,
 } from "./auth.service";
 import setAuthToken from "../../shared/setAuthToken";
 import { AuthRequest } from "../../middleware/verifyToken";
@@ -213,6 +214,32 @@ export const topUpBalance = async (
       status: "success",
       message: `Berhasil melakukan top-up sebesar Rp ${Number(amount).toLocaleString("id-ID")}`,
       data: result,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateProfile = async (
+  req: AuthRequest,
+  res: Response<APIResponse>,
+  next: NextFunction
+) => {
+  try {
+    const { user_id } = req.user as { user_id: string };
+    const { name, phone, address, profile_photo } = req.body;
+
+    const updatedUser = await updateProfileService(user_id, {
+      name,
+      phone,
+      address,
+      profile_photo,
+    });
+
+    return res.status(200).json({
+      status: "success",
+      message: "Profile updated successfully",
+      data: updatedUser,
     });
   } catch (err) {
     next(err);

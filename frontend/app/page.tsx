@@ -57,13 +57,6 @@ export default function Home() {
       <ImageHero isExplore />
       <CallingAction openModal={openModal} />
 
-      <DialogLogin
-        open={defaultModalIsOpen}
-        onClose={closeModal}
-        openModal={openModal}
-      />
-      <DialogSignup open={signUpIsOpen} onClose={onCloseSignup} />
-      <DialogLoginEmail open={signInIsOpen} onClose={closeModal} />
       <Footer />
     </>
   );

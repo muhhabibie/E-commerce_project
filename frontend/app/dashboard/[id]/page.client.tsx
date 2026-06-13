@@ -27,7 +27,7 @@ export default function DashboardClient({
   if (activePage === "overview") {
     content = <OverviewPage merchant={merchant} />;
   } else if (activePage === "pos") {
-    content = <POSPage />;
+    content = <POSPage merchant={merchant} />;
   } else if (activePage === "inventory") {
     content = <InventoryPage merchant={merchant} />;
   } else if (activePage === "sales") {

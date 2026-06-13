@@ -18,6 +18,7 @@ interface ProductFormModalProps {
   onClose: () => void;
   formik: FormikProps<AddProductsForm>;
   isEditing?: boolean;
+  isPending?: boolean;
 }
 
 export function ProductFormModal({
@@ -25,6 +26,7 @@ export function ProductFormModal({
   onClose,
   formik,
   isEditing = false,
+  isPending = false,
 }: ProductFormModalProps) {
   return (
     <Dialog
@@ -100,14 +102,19 @@ export function ProductFormModal({
           />
 
           <div className="flex gap-2 pt-4">
-            <Button type="submit" className="flex-1">
-              Save
+            <Button 
+              type="submit" 
+              className="flex-1 disabled:opacity-50"
+              disabled={isPending}
+            >
+              {isPending ? "Memproses..." : "Save"}
             </Button>
             <Button
               type="button"
               variant="outline"
               className="flex-1 bg-transparent"
               onClick={onClose}
+              disabled={isPending}
             >
               Cancel
             </Button>

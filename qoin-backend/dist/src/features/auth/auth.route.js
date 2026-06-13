@@ -14,4 +14,5 @@ router.post("/signin", (0, validate_1.validate)(auth_schema_1.signInSchema, "bod
 router.post("/logout", verifyToken_1.verifyToken, auth_controller_1.logoutAccount);
 router.post("/user/redeem-qoin", verifyToken_1.verifyToken, auth_controller_1.redeemQoin);
 router.post("/user/top-up", verifyToken_1.verifyToken, auth_controller_1.topUpBalance);
+router.put("/user/profile", verifyToken_1.verifyToken, auth_controller_1.updateProfile);
 exports.default = router;

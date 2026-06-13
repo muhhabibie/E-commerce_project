@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSelledStocksByPaymentIdService = exports.updateOrderStatusService = exports.getUserTransactionsService = exports.selledStockService = exports.deleteManyStocksService = exports.deleteStocksService = exports.updateStocksService = exports.getStocksByMerchantIdService = exports.addStocksService = void 0;
+exports.addStockRatingService = exports.getSelledStocksByPaymentIdService = exports.updateOrderStatusService = exports.getUserTransactionsService = exports.selledStockService = exports.deleteManyStocksService = exports.deleteStocksService = exports.updateStocksService = exports.getStocksByMerchantIdService = exports.addStocksService = void 0;
 const prisma_1 = __importDefault(require("../../database/prisma"));
 const addStocksService = async (name, quantity, price, photo_url, merchant_id, description, user_id) => {
     const stocks = await prisma_1.default.stocks.create({
@@ -24,6 +24,9 @@ const getStocksByMerchantIdService = async (merchant_id) => {
     const stocks = await prisma_1.default.stocks.findMany({
         where: {
             merchant_id,
+        },
+        include: {
+            stockRating: true,
         },
     });
     return stocks;
@@ -191,3 +194,13 @@ const getSelledStocksByPaymentIdService = async (paymentId) => {
     return transactions;
 };
 exports.getSelledStocksByPaymentIdService = getSelledStocksByPaymentIdService;
+const addStockRatingService = async (stock_id, rate) => {
+    const rating = await prisma_1.default.stock_rating.create({
+        data: {
+            stock_id,
+            rate: Number(rate),
+        },
+    });
+    return rating;
+};
+exports.addStockRatingService = addStockRatingService;

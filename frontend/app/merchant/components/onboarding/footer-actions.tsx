@@ -10,6 +10,7 @@ interface OnboardingFooterActionsProps {
   onSubmit: () => void;
   isFirstStep: boolean;
   isLastStep: boolean;
+  isPending?: boolean;
 }
 
 export function OnboardingFooterActions({
@@ -18,6 +19,7 @@ export function OnboardingFooterActions({
   onSubmit,
   isFirstStep,
   isLastStep,
+  isPending,
 }: OnboardingFooterActionsProps) {
   return (
     <div className="sticky bottom-0 bg-white border-t border-border px-4 py-4 mt-8">
@@ -26,17 +28,20 @@ export function OnboardingFooterActions({
           type="button"
           variant="outline"
           onClick={onBack}
-          disabled={isFirstStep}
+          disabled={isFirstStep || isPending}
           className="flex-1 bg-transparent"
         >
           ← Kembali
         </Button>
         <Button
           type="button"
-          className="flex-1  bg-primary text-white hover:bg-primary"
+          className="flex-1 bg-primary text-white hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-50"
           onClick={isLastStep ? onSubmit : onNext}
+          disabled={isPending}
         >
-          {isLastStep ? "Selesai & Simpan" : "Lanjut →"}
+          {isPending 
+            ? "Memproses..." 
+            : (isLastStep ? "Selesai & Simpan" : "Lanjut →")}
         </Button>
       </div>
     </div>

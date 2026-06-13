@@ -155,6 +155,15 @@ const useRegisterMerchant = () => {
       latitude: undefined,
       longitude: undefined,
     },
+    validate: (values) => {
+      const errors: Partial<Record<keyof MerchantFormData, string>> = {};
+      if (!values.description) {
+        errors.description = "Deskripsi toko wajib diisi.";
+      } else if (values.description.length < 20) {
+        errors.description = "Deskripsi toko harus minimal 20 karakter.";
+      }
+      return errors;
+    },
     onSubmit: async (values) => {
       mutate(values);
     },

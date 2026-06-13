@@ -311,21 +311,6 @@ const ExplorePage = () => {
           </Card>
         </PageContainer>
       </Section>
-      <DialogLogin
-        defaultModalIsOpen={defaultModalIsOpen}
-        closeModal={closeModal}
-        openModal={openModal}
-      />
-      <DialogLoginEmail
-        signInIsOpen={signInIsOpen}
-        closeModal={closeModal}
-        openModal={openModal}
-      />
-      <DialogSignup
-        signUpIsOpen={signUpIsOpen}
-        onCloseSignup={onCloseSignup}
-        openModal={openModal}
-      />
     </>
   );
 };

@@ -42,6 +42,10 @@ model users {
   updated_at         DateTime             @updatedAt
   nik                String?
   identity_card      String?
+  name               String?
+  phone              String?
+  address            String?
+  profile_photo      String?
   is_displayed       Boolean              @default(true)
   // Relations
   merchants          merchants[]

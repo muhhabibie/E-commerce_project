@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.topUpBalance = exports.redeemQoin = exports.getQoinTransactions = exports.getUserPoints = exports.getSocketToken = exports.logoutAccount = exports.getUser = exports.loginAccount = exports.createAccount = void 0;
+exports.updateProfile = exports.topUpBalance = exports.redeemQoin = exports.getQoinTransactions = exports.getUserPoints = exports.getSocketToken = exports.logoutAccount = exports.getUser = exports.loginAccount = exports.createAccount = void 0;
 const auth_service_1 = require("./auth.service");
 const setAuthToken_1 = __importDefault(require("../../shared/setAuthToken"));
 const createAccount = async (req, res, next) => {
@@ -174,3 +174,24 @@ const topUpBalance = async (req, res, next) => {
     }
 };
 exports.topUpBalance = topUpBalance;
+const updateProfile = async (req, res, next) => {
+    try {
+        const { user_id } = req.user;
+        const { name, phone, address, profile_photo } = req.body;
+        const updatedUser = await (0, auth_service_1.updateProfileService)(user_id, {
+            name,
+            phone,
+            address,
+            profile_photo,
+        });
+        return res.status(200).json({
+            status: "success",
+            message: "Profile updated successfully",
+            data: updatedUser,
+        });
+    }
+    catch (err) {
+        next(err);
+    }
+};
+exports.updateProfile = updateProfile;

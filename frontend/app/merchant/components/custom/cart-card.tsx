@@ -92,12 +92,6 @@ const CartCard = ({
           )} */}
         </CardContent>
       </Card>
-      <DialogLogin
-        open={defaultModalIsOpen}
-        onClose={closeModal}
-        openModal={openModal}
-      />
-      <DialogLoginEmail open={signInIsOpen} onClose={closeModal} />
     </>
   );
 };

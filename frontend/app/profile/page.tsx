@@ -47,6 +47,9 @@ const ProfilePage = () => {
   const [showTopUp, setShowTopUp] = useState(false);
   const [saldo, setSaldo] = useState(0);
 
+  const [editForm, setEditForm] = useState({ name: "", phone: "", address: "" });
+  const [isSaving, setIsSaving] = useState(false);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -75,21 +78,22 @@ const ProfilePage = () => {
   const userData: UserPayload | undefined = data as UserPayload | undefined;
   const isAuthenticated = !!userData && !isError;
 
-  // Redirect if not authenticated
-  if (!isLoading && !isAuthenticated) {
-    router.push("/");
-    return null;
-  }
-
   // API response shape: { data: { id, email, total_point, created_at, role, ... } }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rawUser = (userData as any)?.data ?? (userData as any) ?? {};
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (rawUser?.balance !== undefined) {
       setSaldo(rawUser.balance);
     }
   }, [rawUser]);
+
+  // Redirect if not authenticated
+  if (!isLoading && !isAuthenticated) {
+    router.push("/");
+    return null;
+  }
 
   const qoinBalance: number =
     rawUser?.total_point ?? rawUser?.qoin ?? rawUser?.user?.total_point ?? 0;
@@ -120,6 +124,26 @@ const ProfilePage = () => {
         day: "numeric",
       })
     : "-";
+
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    try {
+      const res = await axiosInstance.put("/api/auth/user/profile", editForm);
+      if (res.data.status === "success") {
+        toast.success("Profil berhasil diperbarui!");
+        setIsEditing(false);
+        // Memaksa reload data pengguna dengan menyentuh state caching atau cukup merefresh
+        window.location.reload();
+      }
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "Gagal memperbarui profil";
+      toast.error(msg);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (!mounted) {
     return null;
@@ -231,7 +255,12 @@ const ProfilePage = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setIsEditing(!isEditing)}
+                        onClick={() => {
+                          if (!isEditing) {
+                            setEditForm({ name: userName, phone: userPhone, address: userAddress });
+                          }
+                          setIsEditing(!isEditing);
+                        }}
                         className="gap-2 rounded-full border-primary text-primary hover:bg-primary/5"
                       >
                         <Edit2 className="w-4 h-4" />
@@ -248,7 +277,8 @@ const ProfilePage = () => {
                         </Label>
                         {isEditing ? (
                           <Input
-                            defaultValue={userName}
+                            value={editForm.name}
+                            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                             className="rounded-2xl border-[#E5E7EB] focus:border-primary text-sm md:text-base"
                           />
                         ) : (
@@ -267,8 +297,9 @@ const ProfilePage = () => {
                         {isEditing ? (
                           <Input
                             type="email"
-                            defaultValue={userEmail}
-                            className="rounded-2xl border-[#E5E7EB] focus:border-primary text-sm md:text-base"
+                            value={userEmail}
+                            disabled
+                            className="rounded-2xl border-[#E5E7EB] bg-gray-50 focus:border-primary text-sm md:text-base cursor-not-allowed"
                           />
                         ) : (
                           <p className="text-sm md:text-base text-[#8D8D8D] pl-6">
@@ -286,7 +317,8 @@ const ProfilePage = () => {
                         {isEditing ? (
                           <Input
                             type="tel"
-                            defaultValue={userPhone}
+                            value={editForm.phone}
+                            onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                             placeholder="Masukkan nomor telepon"
                             className="rounded-2xl border-[#E5E7EB] focus:border-primary text-sm md:text-base"
                           />
@@ -305,7 +337,8 @@ const ProfilePage = () => {
                         </Label>
                         {isEditing ? (
                           <Input
-                            defaultValue={userAddress}
+                            value={editForm.address}
+                            onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
                             placeholder="Masukkan alamat lengkap"
                             className="rounded-2xl border-[#E5E7EB] focus:border-primary text-sm md:text-base"
                           />
@@ -326,13 +359,11 @@ const ProfilePage = () => {
                             Batal
                           </Button>
                           <Button
-                            onClick={() => {
-                              // TODO: Implement save functionality
-                              setIsEditing(false);
-                            }}
+                            onClick={handleSaveProfile}
+                            disabled={isSaving}
                             className="flex-1 rounded-full bg-primary hover:bg-primary/90 text-white"
                           >
-                            Simpan Perubahan
+                            {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
                           </Button>
                         </div>
                       )}

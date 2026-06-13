@@ -176,7 +176,13 @@ const getMerchantDisplayService = async () => {
             longitude: true,
             stocks: {
                 select: {
+                    id: true,
+                    name: true,
                     price: true,
+                    photo_url: true,
+                    quantity: true,
+                    description: true,
+                    stockRating: true,
                 },
             },
             ratings: {

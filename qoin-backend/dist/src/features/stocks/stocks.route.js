@@ -21,6 +21,7 @@ router.patch("/change-display", verifyToken_1.verifyToken, stocks_controller_1.c
 // INI GANTI NANTI DI E DPOINT TRANSACTION
 router.post("/selled-stock/:payment_id", verifyToken_1.verifyToken, stocks_controller_1.selledStock);
 router.get("/user/transactions", verifyToken_1.verifyToken, stocks_controller_1.getUserTransactions);
+router.post("/rating/:stock_id", verifyToken_1.verifyToken, stocks_controller_1.addStockRating);
 // SSE and Order Status management
 router.get("/order-stream/:payment_id", verifyToken_1.verifyToken, stocks_controller_1.orderStream);
 router.patch("/orders/:payment_id/status", verifyToken_1.verifyToken, stocks_controller_1.updateOrderStatus);
