@@ -82,8 +82,8 @@ const MerchantHeader = ({ isLoading, merchant }: MerchantHeaderProps) => {
     { amount: merchant?.stocks?.length ?? 0, text: "Produk" },
     { amount: merchant?.selledStocks?.length ?? 0, text: "Terjual" },
     {
-      amount: merchant?.merchantFollowers
-        ? merchant.merchantFollowers.length
+      amount: merchant?.followers
+        ? merchant.followers.length
         : merchant?.total_follower ?? 0,
       text: "Pengikut",
     },

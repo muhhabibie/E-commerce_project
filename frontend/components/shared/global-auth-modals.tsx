@@ -25,12 +25,10 @@ const GlobalAuthModals = () => {
       <DialogLoginEmail
         open={signInIsOpen}
         onClose={closeModal}
-        openModal={openModal}
       />
       <DialogSignup
         open={signUpIsOpen}
         onClose={onCloseSignup}
-        openModal={openModal}
       />
     </>
   );
